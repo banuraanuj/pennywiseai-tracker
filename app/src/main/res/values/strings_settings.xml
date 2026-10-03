@@ -112,6 +112,8 @@
     <string name="settings_import_statement_subtitle">Import from GPay, PhonePe, Paytm</string>
     <string name="settings_unrecognized_sms_title">Unrecognized SMS</string>
     <string name="settings_unrecognized_sms_subtitle">View and report unsupported bank messages</string>
+    <string name="settings_custom_templates_title" translatable="false">Custom Templates</string>
+    <string name="settings_custom_templates_subtitle" translatable="false">Create templates to parse niche bank SMS</string>
     <string name="settings_delete_all_title">Delete All Transactions</string>
     <string name="settings_delete_all_subtitle">Clear your transaction history — accounts and budgets stay</string>
 

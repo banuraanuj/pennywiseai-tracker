@@ -86,6 +86,7 @@ class BackupExporter @Inject constructor(
         val tags = database.tagDao().getAllTagsSync()
         val transactionTagCrossRefs = database.tagDao().getAllCrossRefs()
         val recurringTransactions = database.recurringTransactionDao().getAll().first()
+        val customTemplates = database.customTemplateDao().getAllTemplates().first()
         
         // Get preferences from repository
         val prefs = userPreferencesRepository.userPreferences.first()
@@ -212,7 +213,8 @@ class BackupExporter @Inject constructor(
                 budgetCategoryMonthSnapshots = exportedBudgetCategoryMonthSnapshots,
                 tags = exportedTags,
                 transactionTagCrossRefs = exportedTransactionTagCrossRefs,
-                recurringTransactions = exportedRecurringTransactions
+                recurringTransactions = exportedRecurringTransactions,
+                customTemplates = customTemplates
             ),
             preferences = PreferencesSnapshot(
                 theme = ThemePreferences(

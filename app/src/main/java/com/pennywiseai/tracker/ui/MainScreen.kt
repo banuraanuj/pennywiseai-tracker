@@ -29,6 +29,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.pennywiseai.tracker.data.contacts.LocalMerchantDisplay
 import com.pennywiseai.tracker.data.contacts.displayMerchantName
+import com.pennywiseai.tracker.navigation.CustomTemplates
 import com.pennywiseai.tracker.navigation.safePopBackStack
 import com.pennywiseai.tracker.presentation.accounts.AddAccountScreen
 import com.pennywiseai.tracker.presentation.accounts.ManageAccountsScreen
@@ -474,6 +475,11 @@ fun MainScreen(
                             onNavigateToExchangeRates = {
                                 rootNavController?.navigate(
                                     com.pennywiseai.tracker.navigation.ExchangeRates
+                                ) { launchSingleTop = true }
+                            },
+                            onNavigateToCustomTemplates = {
+                                rootNavController?.navigate(
+                                    CustomTemplates
                                 ) { launchSingleTop = true }
                             },
                             onNavigateToAppearance = {

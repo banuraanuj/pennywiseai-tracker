@@ -66,6 +66,7 @@ import com.pennywiseai.tracker.data.database.entity.ProfileEntity
 import com.pennywiseai.tracker.data.database.entity.TransactionEntity
 import com.pennywiseai.tracker.data.database.entity.TransactionGroupEntity
 import com.pennywiseai.tracker.data.database.entity.TransactionType
+import com.pennywiseai.tracker.presentation.transactions.components.TriageWizardBottomSheet
 import com.pennywiseai.tracker.ui.LocalNavAnimatedVisibilityScope
 import com.pennywiseai.tracker.ui.LocalSharedTransitionScope
 import com.pennywiseai.tracker.ui.sharedElementIcon
@@ -199,6 +200,7 @@ fun TransactionDetailScreen(
     
     val context = LocalContext.current
     var showActionsMenu by remember { mutableStateOf(false) }
+    var showTriageWizard by remember { mutableStateOf(false) }
 
     val scrollBehaviorSmall = TopAppBarDefaults.pinnedScrollBehavior()
     val scrollBehaviorLarge = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
@@ -234,6 +236,13 @@ fun TransactionDetailScreen(
                 },
                 actionContent = {
                     if (!isEditMode && transaction != null) {
+                        IconButton(onClick = { showTriageWizard = true }) {
+                            Icon(
+                                Icons.Default.AutoAwesome,
+                                contentDescription = "Quick Classify",
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                        }
                         IconButton(onClick = { viewModel.enterEditMode() }) {
                             Icon(
                                 Icons.Default.Edit,
@@ -343,6 +352,7 @@ fun TransactionDetailScreen(
                 loan = loan,
                 onNavigateToLoanDetail = onNavigateToLoanDetail,
                 onUnmarkLoanClick = { showUnmarkLoanConfirm = true },
+                onOpenTriageWizard = { showTriageWizard = true },
                 accountProfileId = accountProfileId,
                 hazeState = hazeState,
                 modifier = Modifier.padding(paddingValues)
@@ -433,6 +443,23 @@ fun TransactionDetailScreen(
         )
     }
 
+    // Triage / Quick Fix Wizard
+    if (showTriageWizard && transaction != null) {
+        val visibleCategories by viewModel.visibleCategoryNames.collectAsStateWithLifecycle()
+        TriageWizardBottomSheet(
+            onDismissRequest = { showTriageWizard = false },
+            merchantName = transaction?.merchantName ?: "",
+            currentType = transaction?.transactionType,
+            availableCategories = visibleCategories,
+            onApplyFix = { type, category ->
+                viewModel.applyQuickFix(type, category)
+            },
+            onCreateRule = { merchant, type, category ->
+                viewModel.createRuleForMerchant(merchant, type, category)
+            }
+        )
+    }
+
     // Full-screen Receipt Dialog
     if (showFullScreenReceipt && receiptUri != null) {
         Dialog(
@@ -486,6 +513,7 @@ private fun TransactionDetailContent(
     loan: LoanEntity?,
     onNavigateToLoanDetail: (Long) -> Unit,
     onUnmarkLoanClick: () -> Unit,
+    onOpenTriageWizard: () -> Unit = {},
     accountProfileId: Long?,
     hazeState: HazeState,
     modifier: Modifier = Modifier
@@ -503,6 +531,50 @@ private fun TransactionDetailContent(
             .padding(horizontal = Dimensions.Padding.content)
             .padding(top = Spacing.sm, bottom = Dimensions.Padding.content)
     ) {
+        if (!isEditMode && (transaction.category == "Others" || transaction.category.isBlank())) {
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = Spacing.md)
+                    .clickable { onOpenTriageWizard() },
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.primaryContainer
+                )
+            ) {
+                Row(
+                    modifier = Modifier.padding(Spacing.md),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        Icons.Default.AutoAwesome,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onPrimaryContainer
+                    )
+                    Spacer(modifier = Modifier.width(Spacing.md))
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "Uncategorized Transaction",
+                            style = MaterialTheme.typography.titleMedium,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
+                        Text(
+                            text = "Tap to quickly classify & teach PennyWise",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
+                        )
+                    }
+                    Button(
+                        onClick = onOpenTriageWizard,
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.primary
+                        )
+                    ) {
+                        Text("Classify")
+                    }
+                }
+            }
+        }
+
         if (isEditMode) {
             EditableTransactionHeader(
                 transaction = transaction,

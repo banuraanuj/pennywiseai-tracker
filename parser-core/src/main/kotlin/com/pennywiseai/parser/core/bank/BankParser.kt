@@ -452,8 +452,8 @@ abstract class BankParser {
             Regex("""Available\s+limit:?\s*$cur\s*([0-9,]+(?:\.\d{2})?)""", RegexOption.IGNORE_CASE),
             // "Avl Lmt: Rs 111,111.89" / "Avl Lmt: INR 111,111.89" (ICICI, IndusInd, others)
             Regex("""Avl\s+Lmt:?\s*$cur\s*([0-9,]+(?:\.\d{2})?)""", RegexOption.IGNORE_CASE),
-            // "Avail Limit Rs.111,111.89"
-            Regex("""Avail\s+Limit:?\s*$cur\s*([0-9,]+(?:\.\d{2})?)""", RegexOption.IGNORE_CASE),
+            // "Avail Limit Rs.111,111.89" / "Avl Limit: INR 71,876.00"
+            Regex("""(?:Avail|Avl)\s+Limit:?\s*$cur\s*([0-9,]+(?:\.\d{2})?)""", RegexOption.IGNORE_CASE),
             // "Available Credit Limit: Rs.111,111.89"
             Regex("""Available\s+Credit\s+Limit:?\s*$cur\s*([0-9,]+(?:\.\d{2})?)""", RegexOption.IGNORE_CASE),
             // "Limit: Rs.111,111.89" (generic, but only for credit card messages)

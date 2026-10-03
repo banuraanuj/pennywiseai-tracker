@@ -79,6 +79,12 @@ object Loans
 object RecurringTransactions
 
 @Serializable
+object CustomTemplates
+
+@Serializable
+data class AddCustomTemplate(val templateId: Long? = null)
+
+@Serializable
 data class LoanDetail(val loanId: Long)
 
 @Serializable

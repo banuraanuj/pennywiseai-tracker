@@ -94,6 +94,20 @@ class IDFCFirstBankParserTest {
             ),
 
             ParserTestCase(
+                name = "Digital Rupee Wallet Debit",
+                message = "IDFC FIRST Digital Rupee wallet 17e2AKHwGh7PfrrpsCHWKJLbeBtnV2iBd7@dridfc debited for INR 207.00 on 03-10-2026 09:22:19, ZEPTOMARKETPLACEPRIVAT-12682647.payu@indus credited. eINR Ref. no.:31058980084. Call 180010888 for dispute.",
+                sender = "JM-IDFCFB-S",
+                expected = ExpectedTransaction(
+                    amount = BigDecimal("207.00"),
+                    currency = "INR",
+                    type = TransactionType.EXPENSE,
+                    merchant = "ZEPTOMARKETPLACEPRIVAT-12682647.payu@indus",
+                    reference = "31058980084",
+                    isFromCard = false
+                )
+            ),
+
+            ParserTestCase(
                 name = "INR Credit Transaction",
                 message = "Your A/C XXXXXXX5678 is credited by INR 500.00 on 06/08/25 17:36. New Bal :INR 10000.00",
                 sender = "BM-IDFCBK-S",
@@ -118,6 +132,23 @@ class IDFCFirstBankParserTest {
                     merchant = "Interest Credit",
                     accountLast4 = "1234",
                     balance = BigDecimal("15125.50"),
+                    isFromCard = false
+                )
+            ),
+
+            ParserTestCase(
+                name = "Monthly Installment RD",
+                message = "Your monthly installment of Rs. 10,000.00 has been debited from a/c XXXXX164898 on 02/10/26 at 06:09 and credited to RD a/c XXXXX809354. New bal is Rs. 71,457.00. IDFC FIRST Bank",
+                sender = "JM-IDFCFB-S",
+                expected = ExpectedTransaction(
+                    amount = BigDecimal("10000.00"),
+                    currency = "INR",
+                    type = TransactionType.INVESTMENT,
+                    merchant = "Recurring Deposit",
+                    accountLast4 = "9354",
+                    fromAccount = "4898",
+                    toAccount = "9354",
+                    balance = BigDecimal("71457.00"),
                     isFromCard = false
                 )
             ),

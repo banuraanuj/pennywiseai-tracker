@@ -286,6 +286,10 @@ class BackupImporter @Inject constructor(
                 // Profiles were already imported earlier (before transactions /
                 // account balances) so foreign-key remapping could happen.
 
+                backup.database.customTemplates.insertEachCounting({ skippedRows++ }) { template ->
+                    database.customTemplateDao().insertTemplate(template.copy(id = 0))
+                }
+
                 try {
                     database.budgetSnapshotDao().insertGroupSnapshots(backup.database.budgetMonthSnapshots)
                 } catch (e: Exception) {
@@ -442,6 +446,7 @@ class BackupImporter @Inject constructor(
                 importRecurringTransactionsWithMerge(backup.database.recurringTransactions, { resolveProfileId(it) }) { skippedRows++ }
                 importMerchantMappingsWithMerge(backup.database.merchantMappings) { skippedRows++ }
                 importMerchantAliasesWithMerge(backup.database.merchantAliases) { skippedRows++ }
+                importCustomTemplatesWithMerge(backup.database.customTemplates) { skippedRows++ }
 
                 // Import new entities with correct ID mapping for splits and applications
                 // Rules and budgets: skip if exists locally (merge semantics - don't overwrite local changes)
@@ -697,6 +702,19 @@ class BackupImporter @Inject constructor(
     private suspend fun importMerchantAliasesWithMerge(aliases: List<MerchantAliasEntity>, onSkip: () -> Unit) {
         aliases.insertEachCounting(onSkip) { alias ->
             database.merchantAliasDao().insertOrUpdateAlias(alias)
+        }
+    }
+
+    private suspend fun importCustomTemplatesWithMerge(templates: List<CustomTemplateEntity>, onSkip: () -> Unit) {
+        // Merge custom templates based on template contents (prevent exact dupes on repeated merges)
+        val existingTemplates = database.customTemplateDao().getAllTemplatesSync()
+        val existingHashes = existingTemplates.map { "${it.senderPattern}|${it.messageTemplate}|${it.transactionType?.name}" }.toSet()
+
+        templates.insertEachCounting(onSkip) { template ->
+            val hash = "${template.senderPattern}|${template.messageTemplate}|${template.transactionType?.name}"
+            if (!existingHashes.contains(hash)) {
+                database.customTemplateDao().insertTemplate(template.copy(id = 0))
+            }
         }
     }
 

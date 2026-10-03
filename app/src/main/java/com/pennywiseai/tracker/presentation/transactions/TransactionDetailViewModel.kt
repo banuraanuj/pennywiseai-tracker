@@ -45,6 +45,7 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import java.math.BigDecimal
 import java.time.LocalDateTime
+import java.util.UUID
 import javax.inject.Inject
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -97,6 +98,11 @@ class TransactionDetailViewModel @Inject constructor(
 
     // All known tag names, for autocomplete in the editor.
     val allTagNames: StateFlow<List<String>> = tagRepository.observeAllTagNames()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    // Visible category names for the Triage Wizard picker
+    val visibleCategoryNames: StateFlow<List<String>> = categoryRepository.getVisibleCategories()
+        .map { list -> list.map { it.name } }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     // Working copy of tags while in edit mode (persisted on save).
@@ -577,6 +583,55 @@ class TransactionDetailViewModel @Inject constructor(
     fun updateCategory(category: String) {
         _editableTransaction.update { current ->
             current?.copy(category = category.ifEmpty { "Others" })
+        }
+    }
+
+    fun applyQuickFix(type: TransactionType, category: String) {
+        val currentTx = _transaction.value ?: return
+        viewModelScope.launch {
+            val updatedTx = currentTx.copy(
+                transactionType = type,
+                category = category.ifEmpty { "Others" }
+            )
+            transactionRepository.updateTransaction(updatedTx)
+            _transaction.value = updatedTx
+            _saveSuccess.value = true
+        }
+    }
+
+    fun createRuleForMerchant(merchantName: String, type: TransactionType, category: String) {
+        if (merchantName.isBlank()) return
+        viewModelScope.launch {
+            merchantMappingRepository.setMapping(merchantName, category)
+            
+            val rule = TransactionRule(
+                id = UUID.randomUUID().toString(),
+                name = "Always $category for $merchantName",
+                description = "Auto-created rule",
+                priority = 1,
+                conditions = listOf(
+                    RuleCondition(
+                        field = TransactionField.MERCHANT,
+                        operator = ConditionOperator.EQUALS,
+                        value = merchantName
+                    )
+                ),
+                actions = listOf(
+                    RuleAction(
+                        field = TransactionField.CATEGORY,
+                        actionType = ActionType.SET,
+                        value = category
+                    ),
+                    RuleAction(
+                        field = TransactionField.TYPE,
+                        actionType = ActionType.SET,
+                        value = type.name
+                    )
+                ),
+                isActive = true,
+                isSystemTemplate = false
+            )
+            ruleRepository.insertRule(rule)
         }
     }
 

@@ -104,6 +104,7 @@ fun SettingsScreen(
     onNavigateToLoans: () -> Unit = {},
     onNavigateToRecurring: () -> Unit = {},
     onNavigateToTransactionGroups: () -> Unit = {},
+    onNavigateToCustomTemplates: () -> Unit = {},
     onNavigateToExchangeRates: () -> Unit = {},
     onNavigateToAppearance: () -> Unit = {},
     onNavigateToImportStatement: () -> Unit = {},
@@ -696,6 +697,15 @@ fun SettingsScreen(
                     title = stringResource(R.string.settings_unrecognized_sms_title),
                     subtitle = stringResource(R.string.settings_unrecognized_sms_subtitle),
                     onClick = onNavigateToUnrecognizedSms,
+                    position = ListItemPosition.Middle
+                )
+                SettingsNavItem(
+                    icon = Icons.Default.IntegrationInstructions,
+                    iconBgColor = indigo_light,
+                    iconTint = indigo_dark,
+                    title = stringResource(R.string.settings_custom_templates_title),
+                    subtitle = stringResource(R.string.settings_custom_templates_subtitle),
+                    onClick = onNavigateToCustomTemplates,
                     position = ListItemPosition.Middle
                 )
                 SettingsNavItem(

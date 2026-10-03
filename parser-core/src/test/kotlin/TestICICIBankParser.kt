@@ -52,7 +52,21 @@ class ICICIBankParserTest {
                     currency = "INR",
                     type = TransactionType.CREDIT,
                     merchant = "Swiggy",
-                    accountLast4 = "5678"
+                    accountLast4 = "5678",
+                    creditLimit = BigDecimal("150000.00")
+                )
+            ),
+            ParserTestCase(
+                name = "INR card purchase Amazon Pay",
+                message = "INR 904.00 spent using ICICI Bank Card XX1018 on 02-Oct-26 on AMAZON PAY IN E. Avl Limit: INR 71,876.00. If not you, call 1800 2662/SMS BLOCK 1018 to 9215676766.",
+                sender = "JM-ICICIT-S",
+                expected = ExpectedTransaction(
+                    amount = BigDecimal("904.00"),
+                    currency = "INR",
+                    type = TransactionType.CREDIT,
+                    merchant = "AMAZON PAY IN E",
+                    accountLast4 = "1018",
+                    creditLimit = BigDecimal("71876.00")
                 )
             ),
             ParserTestCase(

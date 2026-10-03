@@ -21,6 +21,7 @@ import com.pennywiseai.tracker.data.database.dao.MerchantMappingDao
 import com.pennywiseai.tracker.data.database.dao.MerchantAliasDao
 import com.pennywiseai.tracker.data.database.dao.RuleApplicationDao
 import com.pennywiseai.tracker.data.database.dao.RecurringTransactionDao
+import com.pennywiseai.tracker.data.database.dao.CustomTemplateDao
 import com.pennywiseai.tracker.data.database.dao.RuleDao
 import com.pennywiseai.tracker.data.database.dao.SubscriptionDao
 import com.pennywiseai.tracker.data.database.dao.TagDao
@@ -286,6 +287,12 @@ object DatabaseModule {
     @Singleton
     fun provideRecurringTransactionDao(database: PennyWiseDatabase): RecurringTransactionDao {
         return database.recurringTransactionDao()
+    }
+
+    @Provides
+    @Singleton
+    fun provideCustomTemplateDao(database: PennyWiseDatabase): CustomTemplateDao {
+        return database.customTemplateDao()
     }
 }
 

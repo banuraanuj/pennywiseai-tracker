@@ -23,6 +23,8 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.toRoute
+import com.pennywiseai.tracker.presentation.settings.templates.AddTemplateScreen
+import com.pennywiseai.tracker.presentation.settings.templates.CustomTemplatesScreen
 import com.pennywiseai.tracker.ui.LocalNavAnimatedVisibilityScope
 import com.pennywiseai.tracker.ui.LocalSharedTransitionScope
 import com.pennywiseai.tracker.ui.MainScreen
@@ -128,6 +130,9 @@ fun PennyWiseNavHost(
                 },
                 onNavigateToExchangeRates = {
                     navController.navigate(ExchangeRates) { launchSingleTop = true }
+                },
+                onNavigateToCustomTemplates = {
+                    navController.navigate(CustomTemplates) { launchSingleTop = true }
                 },
                 onNavigateToImportStatement = {
                     navController.navigate(ImportStatement) { launchSingleTop = true }
@@ -391,6 +396,39 @@ fun PennyWiseNavHost(
             popExitTransition = { fadeOut(tween(200)) + slideOutVertically { it / 4 } }
         ) {
             com.pennywiseai.tracker.presentation.recurring.RecurringTransactionsScreen(
+                onNavigateBack = {
+                    navController.safePopBackStack()
+                }
+            )
+        }
+
+        composable<CustomTemplates>(
+            enterTransition = { fadeIn(tween(300)) + slideInVertically { it / 4 } },
+            exitTransition = { fadeOut(tween(200)) },
+            popEnterTransition = { fadeIn(tween(300)) },
+            popExitTransition = { fadeOut(tween(200)) + slideOutVertically { it / 4 } }
+        ) {
+            CustomTemplatesScreen(
+                onNavigateBack = {
+                    navController.safePopBackStack()
+                },
+                onNavigateToAddTemplate = { templateId ->
+                    navController.navigate(AddCustomTemplate(templateId = templateId)) {
+                        launchSingleTop = true
+                    }
+                }
+            )
+        }
+
+        composable<AddCustomTemplate>(
+            enterTransition = { fadeIn(tween(300)) + slideInVertically { it / 4 } },
+            exitTransition = { fadeOut(tween(200)) },
+            popEnterTransition = { fadeIn(tween(300)) },
+            popExitTransition = { fadeOut(tween(200)) + slideOutVertically { it / 4 } }
+        ) { backStackEntry ->
+            val args = backStackEntry.toRoute<AddCustomTemplate>()
+            AddTemplateScreen(
+                templateId = args.templateId,
                 onNavigateBack = {
                     navController.safePopBackStack()
                 }

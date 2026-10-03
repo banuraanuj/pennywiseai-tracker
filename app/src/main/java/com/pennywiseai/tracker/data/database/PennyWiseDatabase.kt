@@ -56,6 +56,8 @@ import com.pennywiseai.tracker.data.database.entity.SubscriptionEntity
 import com.pennywiseai.tracker.data.database.entity.TransactionEntity
 import com.pennywiseai.tracker.data.database.entity.TransactionSplitEntity
 import com.pennywiseai.tracker.data.database.entity.UnrecognizedSmsEntity
+import com.pennywiseai.tracker.data.database.dao.CustomTemplateDao
+import com.pennywiseai.tracker.data.database.entity.CustomTemplateEntity
 
 /**
  * Current Room schema version for [PennyWiseDatabase]. Lives at top-level so
@@ -64,7 +66,7 @@ import com.pennywiseai.tracker.data.database.entity.UnrecognizedSmsEntity
  * that needs to record the version it was exported against. Bump this in lock-
  * step with any schema change.
  */
-const val SCHEMA_VERSION = 62
+const val SCHEMA_VERSION = 63
 
 /**
  * The PennyWise Room database.
@@ -77,7 +79,7 @@ const val SCHEMA_VERSION = 62
  * @property autoMigrations List of automatic migrations between versions.
  */
 @Database(
-    entities = [TransactionEntity::class, SubscriptionEntity::class, ChatMessage::class, MerchantMappingEntity::class, MerchantAliasEntity::class, CategoryEntity::class, AccountBalanceEntity::class, UnrecognizedSmsEntity::class, CardEntity::class, RuleEntity::class, RuleApplicationEntity::class, ExchangeRateEntity::class, BudgetEntity::class, BudgetCategoryEntity::class, BudgetMonthSnapshotEntity::class, BudgetCategoryMonthSnapshotEntity::class, TransactionSplitEntity::class, BankNotificationEntity::class, LoanEntity::class, TransactionGroupEntity::class, ProfileEntity::class, TagEntity::class, TransactionTagCrossRef::class, RecurringTransactionEntity::class],
+    entities = [TransactionEntity::class, SubscriptionEntity::class, ChatMessage::class, MerchantMappingEntity::class, MerchantAliasEntity::class, CategoryEntity::class, AccountBalanceEntity::class, UnrecognizedSmsEntity::class, CardEntity::class, RuleEntity::class, RuleApplicationEntity::class, ExchangeRateEntity::class, BudgetEntity::class, BudgetCategoryEntity::class, BudgetMonthSnapshotEntity::class, BudgetCategoryMonthSnapshotEntity::class, TransactionSplitEntity::class, BankNotificationEntity::class, LoanEntity::class, TransactionGroupEntity::class, ProfileEntity::class, TagEntity::class, TransactionTagCrossRef::class, RecurringTransactionEntity::class, CustomTemplateEntity::class],
     version = SCHEMA_VERSION,
     exportSchema = true,
     autoMigrations = [
@@ -129,7 +131,10 @@ const val SCHEMA_VERSION = 62
         AutoMigration(from = 55, to = 56),
         // 56→57 adds a nullable account_last4 column to subscriptions — a pure
         // additive change, so Room generates the ALTER TABLE automatically (#570).
-        AutoMigration(from = 56, to = 57)
+        AutoMigration(from = 56, to = 57),
+        // 62->63 adds the custom_templates table. Pure additive change,
+        // so Room generates the CREATE TABLE automatically.
+        AutoMigration(from = 62, to = 63)
     ]
 )
 @TypeConverters(Converters::class)
@@ -155,6 +160,7 @@ abstract class PennyWiseDatabase : RoomDatabase() {
     abstract fun profileDao(): ProfileDao
     abstract fun tagDao(): TagDao
     abstract fun recurringTransactionDao(): RecurringTransactionDao
+    abstract fun customTemplateDao(): CustomTemplateDao
 
     companion object {
         const val DATABASE_NAME = "pennywise_database"
@@ -685,6 +691,19 @@ abstract class PennyWiseDatabase : RoomDatabase() {
             }
         }
 
+        val MIGRATION_62_63 = object : Migration(62, 63) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    "CREATE TABLE IF NOT EXISTS `custom_templates` (" +
+                        "`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
+                        "`senderPattern` TEXT NOT NULL DEFAULT '', " +
+                        "`messageTemplate` TEXT NOT NULL DEFAULT '', " +
+                        "`transactionType` TEXT, " +
+                        "`createdAt` INTEGER NOT NULL DEFAULT 0)"
+                )
+            }
+        }
+
         /**
          * Single source of truth for the migration list. Both the Hilt-built
          * database (DatabaseModule.providePennyWiseDatabase) and the
@@ -717,6 +736,7 @@ abstract class PennyWiseDatabase : RoomDatabase() {
             MIGRATION_59_60,
             MIGRATION_60_61,
             MIGRATION_61_62,
+            MIGRATION_62_63,
         )
     }
     

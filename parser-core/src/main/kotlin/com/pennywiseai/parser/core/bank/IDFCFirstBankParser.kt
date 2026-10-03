@@ -34,6 +34,42 @@ class IDFCFirstBankParser : BaseIndianBankParser() {
             return null
         }
 
+        val lowerMessage = smsBody.lowercase()
+        val isRdInstallment = lowerMessage.contains("monthly installment") && lowerMessage.contains("credited to rd")
+
+        if (isRdInstallment) {
+            val amount = extractAmount(smsBody) ?: return null
+            val balance = extractBalance(smsBody)
+
+            val rdPattern = Regex(
+                """debited\s+from\s+a/c\s+[X*\d]*(\d{4}).*?credited\s+to\s+RD\s+a/c\s+[X*\d]*(\d{4})""",
+                RegexOption.IGNORE_CASE
+            )
+            val match = rdPattern.find(smsBody)
+            val fromAcct = match?.groupValues?.get(1)
+            val toAcct = match?.groupValues?.get(2)
+
+            // The balance in the SMS belongs to the RD account (toAcct)
+            val accountLast4 = toAcct ?: fromAcct ?: extractAccountLast4(smsBody)
+
+            return ParsedTransaction(
+                amount = amount,
+                type = TransactionType.INVESTMENT,
+                merchant = "Recurring Deposit",
+                reference = extractReference(smsBody),
+                accountLast4 = accountLast4,
+                balance = balance,
+                smsBody = smsBody,
+                sender = sender,
+                timestamp = timestamp,
+                bankName = getBankName(),
+                isFromCard = false,
+                currency = "INR",
+                fromAccount = fromAcct,
+                toAccount = toAcct
+            )
+        }
+
         val amount = extractAmount(smsBody)
         if (amount == null) {
             return null
@@ -99,9 +135,11 @@ class IDFCFirstBankParser : BaseIndianBankParser() {
             Regex("""[A-Z]{3}\s+([0-9,]+(?:\.\d{2})?)\s+spent""", RegexOption.IGNORE_CASE),
 
             // Debit patterns
+            Regex("""monthly\s+installment\s+of\s+Rs\.?\s*([0-9,]+(?:\.\d{2})?)""", RegexOption.IGNORE_CASE),
             Regex("""Debit\s+Rs\.?\s*([0-9,]+(?:\.\d{2})?)""", RegexOption.IGNORE_CASE),
             Regex("""debited\s+by\s+Rs\.?\s*([0-9,]+(?:\.\d{2})?)""", RegexOption.IGNORE_CASE),
             Regex("""debited\s+by\s+INR\s*([0-9,]+(?:\.\d{2})?)""", RegexOption.IGNORE_CASE),
+            Regex("""debited\s+for\s+INR\s*([0-9,]+(?:\.\d{2})?)""", RegexOption.IGNORE_CASE),
 
             // Credit patterns
             Regex("""credited\s+by\s+Rs\.?\s*([0-9,]+(?:\.\d{2})?)""", RegexOption.IGNORE_CASE),
@@ -158,7 +196,7 @@ class IDFCFirstBankParser : BaseIndianBankParser() {
         // Must contain transaction keywords - IDFC specific patterns
         val transactionKeywords = listOf(
             "debit", "debited", "credited", "withdrawn", "deposited",
-            "spent", "received", "transferred", "paid", "interest"
+            "spent", "received", "transferred", "paid", "interest", "installment"
         )
 
         return transactionKeywords.any { lowerMessage.contains(it) }
@@ -166,6 +204,12 @@ class IDFCFirstBankParser : BaseIndianBankParser() {
 
     override fun extractTransactionType(message: String): TransactionType? {
         val lowerMessage = message.lowercase()
+
+        // RD/FD Installments
+        if (lowerMessage.contains("monthly installment") && lowerMessage.contains("credited to rd")) {
+            return TransactionType.INVESTMENT
+        }
+
         return when {
             lowerMessage.contains("debit") -> TransactionType.EXPENSE
             lowerMessage.contains("debited") -> TransactionType.EXPENSE
@@ -198,29 +242,34 @@ class IDFCFirstBankParser : BaseIndianBankParser() {
             return "Cash Deposit"
         }
 
-        // Pattern: "debited by Rs. X on DATE; MERCHANT credited" (e.g., REDBUS credited)
+        // Pattern: "debited by Rs. X on DATE; MERCHANT credited" or "debited for INR X on DATE, MERCHANT credited"
         val merchantCreditedPattern = Regex(
-            """;\s*([A-Z][A-Z0-9\s]+?)\s+credited""",
+            """[;,]\s*([a-zA-Z0-9.\-_@\s]+?)\s+credited""",
             RegexOption.IGNORE_CASE
         )
         merchantCreditedPattern.find(message)?.let { match ->
             val merchant = cleanMerchantName(match.groupValues[1])
+            if (merchant.contains("@") && merchant.length > 5) {
+                return merchant // Return UPI ID directly without validation that rejects @
+            }
             if (isValidMerchantName(merchant)) {
                 return merchant
             }
         }
 
         // UPI transaction pattern
-        if (message.contains("UPI", ignoreCase = true)) {
+        if (message.contains("UPI", ignoreCase = true) || message.contains("@")) {
             // Try to extract UPI ID
             val upiPattern = Regex(
-                """(?:to|from|at)\s+([a-zA-Z0-9._-]+@[a-zA-Z0-9]+)""",
+                """(?:to|from|at)\s+([a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+)""",
                 RegexOption.IGNORE_CASE
             )
             upiPattern.find(message)?.let { match ->
                 return "UPI - ${match.groupValues[1]}"
             }
-            return "UPI Transaction"
+            if (message.contains("UPI", ignoreCase = true)) {
+                return "UPI Transaction"
+            }
         }
 
         // IMPS with mobile number
@@ -306,7 +355,9 @@ class IDFCFirstBankParser : BaseIndianBankParser() {
             Regex(
                 """Available\s+balance\s+Rs\.?\s*([0-9,]+(?:\.\d{2})?)""",
                 RegexOption.IGNORE_CASE
-            )
+            ),
+            // "New bal is Rs. XXXXX.00"
+            Regex("""New\s+bal\s+is\s+Rs\.?\s*([0-9,]+(?:\.\d{2})?)""", RegexOption.IGNORE_CASE)
         )
 
         for (pattern in balancePatterns) {
@@ -339,6 +390,15 @@ class IDFCFirstBankParser : BaseIndianBankParser() {
             RegexOption.IGNORE_CASE
         )
         impsRefPattern.find(message)?.let { match ->
+            return match.groupValues[1]
+        }
+
+        // eINR reference pattern
+        val einrRefPattern = Regex(
+            """eINR\s+Ref\.?\s*no\.?\s*[:\s]*(\d+)""",
+            RegexOption.IGNORE_CASE
+        )
+        einrRefPattern.find(message)?.let { match ->
             return match.groupValues[1]
         }
 

@@ -5,6 +5,8 @@ import android.util.Log
 import androidx.room.withTransaction
 import com.pennywiseai.parser.core.ParsedTransaction
 import com.pennywiseai.parser.core.bank.BankParserFactory
+import com.pennywiseai.parser.core.DynamicTemplateParser
+import com.pennywiseai.tracker.data.database.dao.CustomTemplateDao
 import com.pennywiseai.tracker.data.database.PennyWiseDatabase
 import com.pennywiseai.tracker.data.database.entity.AccountBalanceEntity
 import com.pennywiseai.tracker.data.database.entity.ProfileEntity
@@ -48,7 +50,8 @@ class SmsTransactionProcessor @Inject constructor(
     private val ruleEngine: RuleEngine,
     private val tagRepository: TagRepository,
     private val ignoredAccountsStore: IgnoredAccountsStore,
-    private val database: PennyWiseDatabase
+    private val database: PennyWiseDatabase,
+    private val customTemplateDao: CustomTemplateDao
 ) {
     companion object {
         private const val TAG = "SmsTransactionProcessor"
@@ -83,6 +86,34 @@ class SmsTransactionProcessor @Inject constructor(
         timestamp: Long
     ): ProcessingResult {
         try {
+            // First try custom user templates.
+            val customTemplates = customTemplateDao.getAllTemplatesSync()
+            val dynamicParser = DynamicTemplateParser()
+            for (template in customTemplates) {
+                // If a sender pattern is provided, ensure it matches
+                if (template.senderPattern.isNotBlank()) {
+                    val pattern = Regex(template.senderPattern, RegexOption.IGNORE_CASE)
+                    if (!pattern.containsMatchIn(sender)) continue
+                }
+
+                // If match, use it!
+                val parsed = dynamicParser.parse(
+                    smsBody = body,
+                    sender = sender,
+                    timestamp = timestamp,
+                    template = template.messageTemplate,
+                    // If forced type is provided in template entity, use it, else let parser default to EXPENSE
+                    forcedType = template.transactionType?.let {
+                        com.pennywiseai.parser.core.TransactionType.valueOf(it.name)
+                    }
+                )
+                if (parsed != null) {
+                    Log.d(TAG, "Parsed transaction via custom template: ${parsed.amount} from Custom Template")
+                    return saveParsedTransaction(parsed, body)
+                }
+            }
+
+            // Fallback to built-in parsers
             // Some senders are shared by multiple parsers (e.g. M-Pesa
             // Kenya/Tanzania/Mozambique all use "M-Pesa"), so try every parser
             // that handles this sender and use the first whose content parses.

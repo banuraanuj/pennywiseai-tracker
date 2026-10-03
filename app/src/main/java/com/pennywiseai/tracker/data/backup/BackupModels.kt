@@ -233,7 +233,10 @@ data class DatabaseSnapshot(
     val transactionTagCrossRefs: List<TransactionTagCrossRef> = emptyList(),
 
     @SerialName("recurring_transactions")
-    val recurringTransactions: List<RecurringTransactionEntity> = emptyList()
+    val recurringTransactions: List<RecurringTransactionEntity> = emptyList(),
+
+    @SerialName("custom_templates")
+    val customTemplates: List<CustomTemplateEntity> = emptyList()
 )
 
 /**

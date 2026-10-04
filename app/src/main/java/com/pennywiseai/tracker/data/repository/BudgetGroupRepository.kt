@@ -36,6 +36,7 @@ class BudgetGroupRepository @Inject constructor(
     private val budgetDao: BudgetDao,
     private val transactionSplitDao: TransactionSplitDao,
     private val userPreferencesRepository: UserPreferencesRepository,
+    private val clock: java.time.Clock = java.time.Clock.systemDefaultZone(),
     private val categoryDao: com.pennywiseai.tracker.data.database.dao.CategoryDao
 ) {
     // Sub-categories (#374): spend rolls up into the parent, and a budget on a
@@ -99,7 +100,7 @@ class BudgetGroupRepository @Inject constructor(
     ): Long {
         val resolvedDisplayOrder = if (displayOrder < 0) budgetDao.getMaxDisplayOrder() + 1 else displayOrder
         val totalAmount = limitAmount ?: buckets.fold(BigDecimal.ZERO) { acc, b -> acc + b.amount }
-        val now = LocalDate.now()
+        val now = LocalDate.now(clock)
         val startDay = userPreferencesRepository.getBudgetCycleStartDay()
         // Seed the [startDate, endDate] cache with the *current* window for
         // the budget's period type so the row is valid before the read-time
@@ -170,7 +171,7 @@ class BudgetGroupRepository @Inject constructor(
         val existing = budgetDao.getBudgetById(budgetId) ?: return
         val totalAmount = limitAmount ?: buckets.fold(BigDecimal.ZERO) { acc, b -> acc + b.amount }
         val effectivePeriod = periodType ?: existing.periodType
-        val now = LocalDate.now()
+        val now = LocalDate.now(clock)
         val globalStartDay = userPreferencesRepository.getBudgetCycleStartDay()
 
         // Resolve the new [startDate, endDate] cache. For CUSTOM the user
@@ -375,7 +376,7 @@ class BudgetGroupRepository @Inject constructor(
      * [BudgetGroupSpending.previousWindows] for the per-week sub-list.
      */
     fun getGroupSpending(year: Int, month: Int, currency: String): Flow<BudgetOverallSummary> {
-        val today = LocalDate.now()
+        val today = LocalDate.now(clock)
         val ym = YearMonth.of(year, month)
         val monthStart = ym.atDay(1)
         val monthEnd = ym.atEndOfMonth()
@@ -545,7 +546,7 @@ class BudgetGroupRepository @Inject constructor(
 
 
     fun getGroupSpendingAllCurrencies(year: Int, month: Int): Flow<BudgetGroupSpendingRaw> {
-        val today = LocalDate.now()
+        val today = LocalDate.now(clock)
         val ym = YearMonth.of(year, month)
         val monthStart = ym.atDay(1)
         val monthEnd = ym.atEndOfMonth()
@@ -772,7 +773,7 @@ class BudgetGroupRepository @Inject constructor(
         month: Int,
         currency: String
     ): List<PastWindowSpending> {
-        val today = LocalDate.now()
+        val today = LocalDate.now(clock)
         val startDay = userPreferencesRepository.getBudgetCycleStartDay()
         val ym = YearMonth.of(year, month)
         val monthEnd = ym.atEndOfMonth()

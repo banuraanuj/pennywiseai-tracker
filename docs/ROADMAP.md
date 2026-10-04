@@ -70,7 +70,7 @@ Legend: `[ ]` pending, `[x]` done, `[!]` blocked
 - [x] T03 Find the UX friction
 
 ### Stage B: Stability and performance
-- [ ] T04 Fix wrong-data bugs (P0)
+- [x] T04 Fix wrong-data bugs (P0)
 - [ ] T05 Performance and recomposition
 - [ ] T06 State restoration and safe actions
 - [ ] T07 Loading, empty and error states
@@ -221,6 +221,14 @@ Entry template:
 ```
 
 ### Log
+
+### 2025-02-24  T04 Fix wrong-data bugs (P0)  [DONE]
+- Changes: Injected `java.time.Clock` into `TransactionRepository`, `HomeViewModel`, `BudgetGroupRepository`, and `AnalyticsViewModel` to fix P0 timezone/date boundary bugs. Removed unused cross-currency SUM queries in `AccountBalanceDao`, `LoanDao`, and `TransactionDao` that caused mixed-currency data corruption. Marked resolved in `AUDIT.md`.
+- Files touched: `ApplicationModule.kt`, `TransactionRepository.kt`, `HomeViewModel.kt`, `BudgetGroupRepository.kt`, `AnalyticsViewModel.kt`, `AccountBalanceDao.kt`, `LoanDao.kt`, `TransactionDao.kt`, `AccountBalanceRepository.kt`, `AUDIT.md`.
+- Gates: G1 ✓ G2 ✓ G3 ✓ G4 ✓ G5 (skipped: no device) G6 n/a
+- Evidence (tests added / metrics before-after): Added `TransactionRepositoryTimezoneTest.kt` verifying `Clock` injection forces explicit timezones to prevent boundary bugs.
+- Assumptions: Unused DAO queries were the root of the "simple DAOs" mixed currency totals issue, therefore safe to delete. `TransactionsViewModel` `filteredTotals` was verified to be correctly doing FX conversion in unified mode or limiting to specific currencies otherwise.
+- Risks / Needs decision: None.
 
 ### 2025-02-24  T03 Find the UX friction  [DONE]
 - Changes: appended "UX Friction" to `docs/AUDIT.md`. Walked through user journeys (First run, Today's spend, Budgets, Subscriptions) and calculated tap counts. Highlighted onboarding scan block and empty states. Ended with the top 10 highest-impact improvements ordered by priority.

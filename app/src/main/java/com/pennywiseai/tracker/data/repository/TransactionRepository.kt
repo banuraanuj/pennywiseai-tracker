@@ -27,7 +27,8 @@ import kotlin.math.min
 open class TransactionRepository @Inject constructor(
     private val transactionDao: TransactionDao,
     private val transactionSplitDao: TransactionSplitDao,
-    private val userPreferencesRepository: UserPreferencesRepository
+    private val userPreferencesRepository: UserPreferencesRepository,
+    private val clock: java.time.Clock = java.time.Clock.systemDefaultZone()
 ) {
     fun getAllTransactions(): Flow<List<TransactionEntity>> = 
         transactionDao.getAllTransactions()
@@ -104,11 +105,7 @@ open class TransactionRepository @Inject constructor(
     fun getAllMerchants(): Flow<List<String>> =
         transactionDao.getAllMerchants()
     
-    suspend fun getTotalAmountByTypeAndPeriod(
-        type: TransactionType,
-        startDate: LocalDateTime,
-        endDate: LocalDateTime
-    ): Double? = transactionDao.getTotalAmountByTypeAndPeriod(type, startDate, endDate)
+
     
     suspend fun insertTransaction(transaction: TransactionEntity): Long = 
         transactionDao.insertTransaction(transaction)
@@ -298,7 +295,7 @@ open class TransactionRepository @Inject constructor(
     }
 
     private fun getTransactionsForCurrentMonth(): Flow<List<TransactionEntity>> {
-        val now = LocalDate.now()
+        val now = LocalDate.now(clock)
         return userPreferencesRepository.budgetCycleStartDay.flatMapLatest { startDay ->
             val (cycleStart, cycleEnd) = BudgetCycle.currentCycle(now, startDay)
             val startDate = cycleStart.atStartOfDay()
@@ -310,7 +307,7 @@ open class TransactionRepository @Inject constructor(
     }
 
     private fun getTransactionsForComparableLastMonth(): Flow<List<TransactionEntity>> {
-        val now = LocalDate.now()
+        val now = LocalDate.now(clock)
         return userPreferencesRepository.budgetCycleStartDay.flatMapLatest { startDay ->
             val current = BudgetCycle.currentCycle(now, startDay)
             val (prevStart, prevEnd) = BudgetCycle.previousCycle(current, startDay)

@@ -89,6 +89,7 @@ class HomeViewModel @Inject constructor(
     private val restoreTransactionUseCase: RestoreTransactionUseCase,
     @ApplicationContext private val context: Context,
     entitlementGate: com.pennywiseai.tracker.billing.EntitlementGate,
+    private val clock: java.time.Clock = java.time.Clock.systemDefaultZone(),
 ) : ViewModel() {
 
     /**
@@ -149,7 +150,7 @@ class HomeViewModel @Inject constructor(
      * same window the data is bucketed against.
      */
     private val _currentCycleWindow = MutableStateFlow(
-        BudgetCycle.currentCycle(LocalDate.now(), BudgetCycle.DEFAULT_START_DAY)
+        BudgetCycle.currentCycle(LocalDate.now(clock), BudgetCycle.DEFAULT_START_DAY)
     )
     val currentCycleWindow: StateFlow<Pair<LocalDate, LocalDate>> = _currentCycleWindow.asStateFlow()
 
@@ -221,7 +222,7 @@ class HomeViewModel @Inject constructor(
     private fun observeBudgetCycle() {
         userPreferencesRepository.budgetCycleStartDay
             .onEach { startDay ->
-                _currentCycleWindow.value = BudgetCycle.currentCycle(LocalDate.now(), startDay)
+                _currentCycleWindow.value = BudgetCycle.currentCycle(LocalDate.now(clock), startDay)
             }
             .launchIn(viewModelScope)
     }
@@ -423,7 +424,7 @@ class HomeViewModel @Inject constructor(
             // cycleStart would go stale.
             _currentCycleWindow
                 .flatMapLatest { (cycleStart, _) ->
-                    val now = LocalDate.now()
+                    val now = LocalDate.now(clock)
                     transactionRepository.getTransactionsBetweenDates(cycleStart, now)
                 }
                 .combine(userPreferencesRepository.selectedProfileId) { transactions, profileId ->
@@ -644,7 +645,7 @@ class HomeViewModel @Inject constructor(
 
         viewModelScope.launch {
             // Load cumulative spending sparkline for current cycle + previous cycle comparison
-            val now = LocalDate.now()
+            val now = LocalDate.now(clock)
             _currentCycleWindow
                 .flatMapLatest { (firstOfMonth, cycleEnd) ->
                     val startDay = userPreferencesRepository.budgetCycleStartDay.first()
@@ -777,11 +778,11 @@ class HomeViewModel @Inject constructor(
 
         viewModelScope.launch {
             // Load transaction heatmap (last 26 weeks / 182 days)
-            val heatmapStart = LocalDate.now().minusDays(182)
+            val heatmapStart = LocalDate.now(clock).minusDays(182)
             combine(
                 transactionRepository.getTransactionsBetweenDates(
                     startDate = heatmapStart,
-                    endDate = LocalDate.now()
+                    endDate = LocalDate.now(clock)
                 ),
                 userPreferencesRepository.selectedProfileId,
                 _cachedAccountBalances.filterNotNull()
@@ -916,7 +917,7 @@ class HomeViewModel @Inject constructor(
                 // independently, so the per-cadence window math is correct
                 // regardless of which calendar month the page is on.
                 val startDay = userPreferencesRepository.budgetCycleStartDay.first()
-                val today = LocalDate.now()
+                val today = LocalDate.now(clock)
                 val todayYm = YearMonth.of(today.year, today.monthValue)
                 if (unifiedMode) {
                     budgetGroupRepository.getGroupSpendingAllCurrencies(todayYm.year, todayYm.monthValue)
@@ -1185,7 +1186,7 @@ class HomeViewModel @Inject constructor(
      * open their expense tracker anyway, which makes the scheduler unnecessary.
      */
     private val lastMonthKey: String
-        get() = YearMonth.from(LocalDate.now()).minusMonths(1).toString()
+        get() = YearMonth.from(LocalDate.now(clock)).minusMonths(1).toString()
 
     private fun refreshSharePrompt() {
         viewModelScope.launch {
@@ -1195,7 +1196,7 @@ class HomeViewModel @Inject constructor(
             }
             // A card summarising three transactions is worse than no card, and nobody
             // shares one. Below this bar the prompt simply doesn't appear.
-            val month = YearMonth.from(LocalDate.now()).minusMonths(1)
+            val month = YearMonth.from(LocalDate.now(clock)).minusMonths(1)
             val count = transactionRepository.getTransactionsBetweenDates(
                 month.atDay(1).atStartOfDay(),
                 month.atEndOfMonth().atTime(23, 59, 59),

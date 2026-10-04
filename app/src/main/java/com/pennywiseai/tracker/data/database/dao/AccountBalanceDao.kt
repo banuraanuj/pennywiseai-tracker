@@ -145,22 +145,7 @@ interface AccountBalanceDao {
     """)
     fun getCurrentMonthLatestBalances(): Flow<List<AccountBalanceEntity>>
     
-    @Query("""
-        SELECT SUM(balance) as total FROM (
-            SELECT DISTINCT 
-                ab1.balance
-            FROM account_balances ab1
-            INNER JOIN (
-                SELECT bank_name, account_last4, MAX(timestamp) as max_timestamp
-                FROM account_balances
-                GROUP BY bank_name, account_last4
-            ) ab2 
-            ON ab1.bank_name = ab2.bank_name 
-            AND ab1.account_last4 = ab2.account_last4 
-            AND ab1.timestamp = ab2.max_timestamp
-        )
-    """)
-    fun getTotalBalance(): Flow<BigDecimal?>
+
     
     @Query("""
         SELECT * FROM account_balances

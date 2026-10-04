@@ -365,8 +365,8 @@ Based on a codebase review of Compose UI, ViewModels, and Room entities, here ar
 ### 4.3 Data Correctness (P0)
 | Issue | Location | Impact | Severity |
 |---|---|---|---|
-| **Mixed-Currency Totals** | `TransactionsScreen.kt:126`, simple DAOs | `SUM(amount)` across mixed currencies without FX conversion yields garbage totals in global analytics. | P0 |
-| **Timezone & Date Boundaries** | `TransactionRepository.kt:301`, `HomeViewModel.kt:426` | `LocalDate.now()` uses system timezone and can evaluate on different days around midnight, breaking month-end math. Needs injected `Clock`. | P0 |
+| ~~\*\*Mixed-Currency Totals\*\*~~ | `TransactionsScreen.kt:126`, simple DAOs | ~~\`SUM(amount)\` across mixed currencies without FX conversion yields garbage totals in global analytics.~~ **[RESOLVED]** | P0 |
+| ~~\*\*Timezone & Date Boundaries\*\*~~ | `TransactionRepository.kt:301`, `HomeViewModel.kt:426` | ~~\`LocalDate.now()\` uses system timezone and can evaluate on different days around midnight, breaking month-end math. Needs injected \`Clock\`.~~ **[RESOLVED]** | P0 |
 
 ### 4.4 UI/UX & Edge Cases
 | Issue | Location | Impact | Severity |

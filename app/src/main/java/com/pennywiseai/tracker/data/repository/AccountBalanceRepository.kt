@@ -51,9 +51,7 @@ open class AccountBalanceRepository @Inject constructor(
         return accountBalanceDao.getAllLatestBalances()
     }
     
-    fun getTotalBalance(): Flow<BigDecimal?> {
-        return accountBalanceDao.getTotalBalance()
-    }
+
     
     fun getBalanceHistory(
         bankName: String,

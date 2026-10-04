@@ -43,6 +43,7 @@ class AnalyticsViewModel @Inject constructor(
     @dagger.hilt.android.qualifiers.ApplicationContext private val context: Context,
     private val transactionRepository: TransactionRepository,
     private val userPreferencesRepository: UserPreferencesRepository,
+    private val clock: java.time.Clock = java.time.Clock.systemDefaultZone(),
     private val currencyConversionService: CurrencyConversionService,
     private val accountBalanceRepository: AccountBalanceRepository,
     private val profileRepository: ProfileRepository,
@@ -736,7 +737,7 @@ class AnalyticsViewModel @Inject constructor(
                 if (aggregateByYear) {
                     var currentYear = actualStartDate.withDayOfYear(1)
                     val lastYear = endDate.withDayOfYear(1)
-                    while (!currentYear.isAfter(lastYear) && !currentYear.isAfter(LocalDate.now().withDayOfYear(1))) {
+                    while (!currentYear.isAfter(lastYear) && !currentYear.isAfter(LocalDate.now(clock).withDayOfYear(1))) {
                         val endOfYear = currentYear.withDayOfYear(currentYear.lengthOfYear())
                         val totalAmount = transactions.filter {
                             !it.dateTime.toLocalDate().isBefore(currentYear) && !it.dateTime.toLocalDate().isAfter(endOfYear)
@@ -748,7 +749,7 @@ class AnalyticsViewModel @Inject constructor(
                 } else {
                     var currentMonth = actualStartDate.withDayOfMonth(1)
                     val lastMonth = endDate.withDayOfMonth(1)
-                    while (!currentMonth.isAfter(lastMonth) && !currentMonth.isAfter(LocalDate.now().withDayOfMonth(1))) {
+                    while (!currentMonth.isAfter(lastMonth) && !currentMonth.isAfter(LocalDate.now(clock).withDayOfMonth(1))) {
                         val endOfMonth = currentMonth.withDayOfMonth(currentMonth.lengthOfMonth())
                         val totalAmount = transactions.filter {
                             !it.dateTime.toLocalDate().isBefore(currentMonth) && !it.dateTime.toLocalDate().isAfter(endOfMonth)
@@ -762,7 +763,7 @@ class AnalyticsViewModel @Inject constructor(
             else -> {
                 val transactionsByDate = transactions.groupBy { it.dateTime.toLocalDate() }
                 var currentDate = startDate
-                while (!currentDate.isAfter(endDate) && !currentDate.isAfter(LocalDate.now())) {
+                while (!currentDate.isAfter(endDate) && !currentDate.isAfter(LocalDate.now(clock))) {
                     val totalAmount = ((transactionsByDate[currentDate] ?: emptyList()).map(amountIn).sum().toBigDecimal() -
                         (refundByDay[currentDate] ?: BigDecimal.ZERO)).coerceAtLeast(BigDecimal.ZERO)
                     trend.add(BalancePoint(timestamp = currentDate.atStartOfDay(), balance = totalAmount, currency = currency))

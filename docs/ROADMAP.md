@@ -71,7 +71,7 @@ Legend: `[ ]` pending, `[x]` done, `[!]` blocked
 
 ### Stage B: Stability and performance
 - [x] T04 Fix wrong-data bugs (P0)
-- [ ] T05 Performance and recomposition
+- [/] T05 Performance and recomposition
 - [ ] T06 State restoration and safe actions
 - [ ] T07 Loading, empty and error states
 - [ ] T08 Layout, accessibility, robustness
@@ -221,6 +221,12 @@ Entry template:
 ```
 
 ### Log
+
+### 2025-02-24  T05 Performance and recomposition  [IN PROGRESS]
+- Changes: Replaced `collectAsState` with `collectAsStateWithLifecycle` in `TransactionsScreen` and `HomeScreen`. Added stable keys and `contentType` to `LazyColumn` items in `TransactionsScreen`, `ManageAccountsScreen`, and `ChatScreen`. Added `.flowOn(Dispatchers.Default)` to heavy flow mappings. Added Room indices for `date_time`, `is_deleted`, `category`, and `transaction_type` with a new `Migration63To64` and `MigrationTest`. 
+- Note: Pausing execution here to avoid AI context window exhaustion before tackling pagination and the 20k transaction seeder.
+- Files touched: `TransactionsScreen.kt`, `HomeScreen.kt`, `ManageAccountsScreen.kt`, `ChatScreen.kt`, `TransactionEntity.kt`, `PennyWiseDatabase.kt`, `Migration63To64.kt`, `MigrationTest.kt`.
+- Gates: G1 ✓ G2 ✓ G3 ✓ G4 ✓ G6 (added but pending full test run)
 
 ### 2025-02-24  T04 Fix wrong-data bugs (P0)  [DONE]
 - Changes: Injected `java.time.Clock` into `TransactionRepository`, `HomeViewModel`, `BudgetGroupRepository`, and `AnalyticsViewModel` to fix P0 timezone/date boundary bugs. Removed unused cross-currency SUM queries in `AccountBalanceDao`, `LoanDao`, and `TransactionDao` that caused mixed-currency data corruption. Marked resolved in `AUDIT.md`.

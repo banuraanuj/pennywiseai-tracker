@@ -67,7 +67,7 @@ Legend: `[ ]` pending, `[x]` done, `[!]` blocked
 ### Stage A: Audit (docs only)
 - [x] T01 Map the app
 - [x] T02 Find the glitches
-- [ ] T03 Find the UX friction
+- [x] T03 Find the UX friction
 
 ### Stage B: Stability and performance
 - [ ] T04 Fix wrong-data bugs (P0)
@@ -221,6 +221,14 @@ Entry template:
 ```
 
 ### Log
+
+### 2025-02-24  T03 Find the UX friction  [DONE]
+- Changes: appended "UX Friction" to `docs/AUDIT.md`. Walked through user journeys (First run, Today's spend, Budgets, Subscriptions) and calculated tap counts. Highlighted onboarding scan block and empty states. Ended with the top 10 highest-impact improvements ordered by priority.
+- Files touched: `docs/AUDIT.md`
+- Gates: G7 ✓ (Docs-only)
+- Evidence (tests added / metrics before-after): N/A, documentation audit only.
+- Assumptions: Navigating flows via code inspection adequately maps to true user tap counts.
+- Risks / Needs decision: None.
 
 ### 2025-02-24  T02 Find the glitches  [DONE]
 - Changes: appended "Glitch Inventory" to `docs/AUDIT.md` mapping all glitches identified in Compose UI and ViewModels (performance bottlenecks, double-tap navs, TZ/date bugs, missing indexes/empty states).

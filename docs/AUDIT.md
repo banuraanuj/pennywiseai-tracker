@@ -375,3 +375,35 @@ Based on a codebase review of Compose UI, ViewModels, and Room entities, here ar
 | **Missing Error States** | Analytics & Budgets | No error indicator or retry button if a calculation fails or times out. | P2 |
 | **Flicker on First Load** | `CategoryPieChart.kt` | Pie chart animation resets when upstream Flow emits an identical list due to lack of `distinctUntilChanged`. | P2 |
 | **IME / Edge-to-Edge** | Various bottom sheets | Bottom sheets can overlap with system navigation bars or be covered by the keyboard. | P2 |
+
+---
+
+## 5. UX Friction
+
+A walkthrough of common user journeys reveals several areas of friction, excessive tapping, and navigational confusion.
+
+### 5.1 Journey Analysis & Tap Counts
+
+| Action | Tap Count | Friction / Confusion Point |
+|---|---|---|
+| **First run + SMS permission** | ~8-9 taps | The `SmsScanStep` blocks the user. If they have 10k+ SMS, they must wait minutes or hit "Skip". If parsing yields 0 results, there is no explanation (unsupported bank). If permission is denied, the user lands on a completely blank Home screen with no onboarding empty states. |
+| **Seeing today's spend** | 1-2 taps | Home screen defaults to current month Cash Flow. To see "Today", the user must navigate to Analytics or filter the Transactions tab. |
+| **Fixing a wrong category** | 4 taps | Requires tapping into `TransactionDetailScreen`, opening the category picker sheet, selecting, and returning. No inline category editing in the list. |
+| **Searching a past transaction** | 2 taps + typing | Accessible via the Transactions tab search icon. Standard friction. |
+| **Creating a budget** | 4 taps + typing | Buried in `Settings` -> `Manage Budgets`. Highly undiscoverable for a core feature. |
+| **Checking subscriptions** | 1 tap | Requires finding the `UpcomingSubscriptionsCard` on the Home screen and tapping "View All". Not accessible via bottom navigation. |
+| **Checking an account balance** | 0-1 taps | Visible on Home `AccountCarousel`, or 1 tap to `ManageAccountsScreen` if off-screen. |
+| **Exporting data** | 4 taps | `Settings` -> `Export Data` -> System file picker. |
+
+### 5.2 Top 10 Highest-Impact Improvements (Ordered)
+
+1. **Empty States with CTAs:** Introduce clear illustrations and actions on Home and Transactions when there is no data (or permission was denied), rather than showing blank screens.
+2. **Needs Review Inbox:** Provide visibility for unparsed or low-confidence SMS. Currently, users have no idea if an SMS failed to parse unless they dig into the Unrecognized SMS debug screen.
+3. **Background the Onboarding SMS Scan:** Allow users to enter the app immediately while historical SMS scanning happens in the background via WorkManager, rather than blocking the onboarding flow.
+4. **Promote Budgets out of Settings:** Move Budget creation and tracking to the Home screen or bottom navigation to improve discoverability.
+5. **One-Tap Category Fix:** Allow users to change a transaction's category directly from the Transactions list without opening the full detail screen.
+6. **"Today's Spend" Visibility:** Add a clear "Today" summary metric to the top of the Home screen alongside the monthly cash flow.
+7. **Global Period Switcher:** Implement a unified dropdown (Today, This Week, This Month) that applies globally across Home, Transactions, and Analytics.
+8. **Clarify "0 Transactions" in Scan:** If the initial scan finds nothing, explicitly tell the user their bank may not be supported yet, and prompt them to add a custom template.
+9. **Promote Subscriptions:** Give subscriptions a dedicated top-level view or clearer Home integration, as they are a primary use case.
+10. **Separate Cards from Accounts in Net Worth:** Make the distinction between cash assets (banks) and credit liabilities (cards) clearer in the global balance math.

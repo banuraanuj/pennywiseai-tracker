@@ -192,7 +192,7 @@ fun ChatScreen(
                             verticalArrangement = Arrangement.spacedBy(Spacing.sm),
                             flingBehavior = rememberOverscrollFlingBehavior { listState }
                         ) {
-                            items(messages) { message ->
+                            items(messages, key = { it.id }, contentType = { "message" }) { message ->
                                 ChatMessageItem(message = message)
                             }
                         }
@@ -397,7 +397,7 @@ fun ChatScreen(
                                 }
                             }
 
-                            items(messages) { message ->
+                            items(messages, key = { it.id }, contentType = { "message" }) { message ->
                                 ChatMessageItem(message = message)
                             }
 

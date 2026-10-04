@@ -235,7 +235,7 @@ fun ManageAccountsScreen(
                         SectionHeaderV2(title = stringResource(R.string.manage_accounts_section_bank))
                     }
 
-                    items(visibleRegularAccounts) { account ->
+                    items(visibleRegularAccounts, key = { it.id }, contentType = { "account" }) { account ->
                         AccountItem(
                             account = account,
                             linkedCards = uiState.linkedCards[account.accountLast4] ?: emptyList(),
@@ -282,7 +282,7 @@ fun ManageAccountsScreen(
                         SectionHeaderV2(title = stringResource(R.string.manage_accounts_section_unlinked_cards))
                     }
                     
-                    items(uiState.orphanedCards) { card ->
+                    items(uiState.orphanedCards, key = { "card-${it.id}" }, contentType = { "card" }) { card ->
                         OrphanedCardItem(
                             card = card,
                             accounts = allRegularAccounts,
@@ -306,7 +306,7 @@ fun ManageAccountsScreen(
                         SectionHeaderV2(title = stringResource(R.string.manage_accounts_section_credit_cards))
                     }
 
-                    items(visibleCreditCards) { card ->
+                    items(visibleCreditCards, key = { "card-${it.id}" }, contentType = { "card" }) { card ->
                         CreditCardItem(
                             card = card,
                             isHidden = false,
@@ -383,7 +383,7 @@ fun ManageAccountsScreen(
 
                     if (showHiddenAccounts) {
                         // Hidden Bank Accounts
-                        items(hiddenRegularAccounts) { account ->
+                        items(hiddenRegularAccounts, key = { it.id }, contentType = { "account" }) { account ->
                             AccountItem(
                                 account = account,
                                 linkedCards = uiState.linkedCards[account.accountLast4] ?: emptyList(),
@@ -423,7 +423,7 @@ fun ManageAccountsScreen(
                         }
 
                         // Hidden Credit Cards
-                        items(hiddenCreditCards) { card ->
+                        items(hiddenCreditCards, key = { "card-${it.id}" }, contentType = { "card" }) { card ->
                             CreditCardItem(
                                 card = card,
                                 isHidden = true,

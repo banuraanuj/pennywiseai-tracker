@@ -11,7 +11,12 @@ import kotlinx.serialization.Serializable
 
 @Entity(
     tableName = "transactions",
-    indices = [Index(value = ["transaction_hash"], unique = true)]
+    indices = [
+        Index(value = ["transaction_hash"], unique = true),
+        Index(value = ["is_deleted", "date_time"]),
+        Index(value = ["category"]),
+        Index(value = ["transaction_type"])
+    ]
 )
 @Serializable
 data class TransactionEntity(

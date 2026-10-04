@@ -66,7 +66,7 @@ import com.pennywiseai.tracker.data.database.entity.CustomTemplateEntity
  * that needs to record the version it was exported against. Bump this in lock-
  * step with any schema change.
  */
-const val SCHEMA_VERSION = 63
+const val SCHEMA_VERSION = 64
 
 /**
  * The PennyWise Room database.
@@ -737,6 +737,7 @@ abstract class PennyWiseDatabase : RoomDatabase() {
             MIGRATION_60_61,
             MIGRATION_61_62,
             MIGRATION_62_63,
+    com.pennywiseai.tracker.data.database.migration.MIGRATION_63_64,
         )
     }
     

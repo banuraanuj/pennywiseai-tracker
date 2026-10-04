@@ -302,6 +302,7 @@ dependencies {
     testImplementation(libs.junit)
     testImplementation(libs.androidx.room.testing)
     androidTestImplementation(libs.androidx.work.testing)
+    androidTestImplementation(libs.androidx.room.testing)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(libs.mockk.android)

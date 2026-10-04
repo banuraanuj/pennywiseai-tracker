@@ -153,15 +153,15 @@ fun HomeScreen(
     onTransactionTypeClick: (String?) -> Unit = {},
     onFabPositioned: (Rect) -> Unit = {}
 ) {
-    val uiState by viewModel.uiState.collectAsState()
-    val isProEntitled by viewModel.isProEntitled.collectAsState()
-    val currentCycleWindow by viewModel.currentCycleWindow.collectAsState()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val isProEntitled by viewModel.isProEntitled.collectAsStateWithLifecycle()
+    val currentCycleWindow by viewModel.currentCycleWindow.collectAsStateWithLifecycle()
     var showUpgradeSheet by rememberSaveable { mutableStateOf(false) }
-    val deletedTransaction by viewModel.deletedTransaction.collectAsState()
-    val smsScanWorkInfo by viewModel.smsScanWorkInfo.collectAsState()
-    val groupSummaries by viewModel.groupSummaries.collectAsState()
+    val deletedTransaction by viewModel.deletedTransaction.collectAsStateWithLifecycle()
+    val smsScanWorkInfo by viewModel.smsScanWorkInfo.collectAsStateWithLifecycle()
+    val groupSummaries by viewModel.groupSummaries.collectAsStateWithLifecycle()
     val homeSectionLayout by viewModel.homeSectionLayout.collectAsStateWithLifecycle()
-    val showSharePrompt by viewModel.showSharePrompt.collectAsState()
+    val showSharePrompt by viewModel.showSharePrompt.collectAsStateWithLifecycle()
     val activity = LocalActivity.current
 
     val snackbarHostState = remember { SnackbarHostState() }

@@ -69,6 +69,13 @@
     <string name="add_account_title">Add Account</string>
     <string name="add_account_intro">Add accounts not tracked via SMS like cash, wallets, credit cards, or investment accounts.</string>
     <string name="add_account_type_label">Account Type</string>
+    <string name="account_type_savings">Savings</string>
+    <string name="account_type_current">Current</string>
+    <string name="account_type_credit_card">Credit Card</string>
+    <string name="account_type_cash">Cash</string>
+    <string name="account_type_fixed_deposit">Fixed Deposit</string>
+    <string name="account_type_recurring_deposit">Recurring Deposit</string>
+    <string name="manage_accounts_section_investments">Investments &amp; Deposits</string>
     <string name="add_account_currency_label">Currency</string>
     <string name="add_account_name_label">Account Name *</string>
     <string name="add_account_identifier_label">Identifier (Optional)</string>

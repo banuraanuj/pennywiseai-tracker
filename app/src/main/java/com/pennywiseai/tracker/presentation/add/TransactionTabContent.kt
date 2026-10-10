@@ -41,6 +41,7 @@ import com.pennywiseai.tracker.presentation.accounts.AccountType
 import com.pennywiseai.tracker.ui.components.TagInputField
 import com.pennywiseai.tracker.ui.theme.*
 import com.pennywiseai.tracker.utils.CurrencyFormatter
+import com.pennywiseai.tracker.ui.components.QuickCategoryPickerSheet
 import com.pennywiseai.tracker.ui.theme.Spacing
 import java.time.format.DateTimeFormatter
 import java.util.Locale
@@ -460,11 +461,7 @@ fun TransactionTabContent(
                     )
 
                     // Category field
-                    ExposedDropdownMenuBox(
-                        expanded = showCategoryMenu,
-                        onExpandedChange = { showCategoryMenu = it },
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
+                    Box(modifier = Modifier.fillMaxWidth()) {
                         TextField(
                             value = uiState.category,
                             onValueChange = {},
@@ -473,7 +470,8 @@ fun TransactionTabContent(
                             singleLine = true,
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .menuAnchor(MenuAnchorType.PrimaryNotEditable),
+                                .clickable { showCategoryMenu = true },
+                            enabled = false, // Use enabled = false + clickable on parent box for better tap target behavior
                             shape = bottomShape,
                             leadingIcon = {
                                 Icon(Icons.Default.Category, contentDescription = null)
@@ -483,28 +481,27 @@ fun TransactionTabContent(
                             },
                             isError = uiState.categoryError != null,
                             supportingText = uiState.categoryError?.let { { Text(it.asString()) } },
-                            colors = filledFieldColors()
+                            colors = filledFieldColors().copy(
+                                disabledTextColor = MaterialTheme.colorScheme.onSurface,
+                                disabledLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                                disabledLeadingIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                                disabledTrailingIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                                disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                                disabledIndicatorColor = Color.Transparent
+                            )
                         )
+                    }
 
-                        ExposedDropdownMenu(
-                            expanded = showCategoryMenu,
-                            onDismissRequest = { showCategoryMenu = false }
-                        ) {
-                            categories.forEach { category ->
-                                DropdownMenuItem(
-                                    text = {
-                                        Text(
-                                            category.name,
-                                            modifier = Modifier.padding(start = if (category.parentId != null) Spacing.lg else Spacing.none)
-                                        )
-                                    },
-                                    onClick = {
-                                        viewModel.updateTransactionCategory(category.name)
-                                        showCategoryMenu = false
-                                    }
-                                )
-                            }
-                        }
+                    if (showCategoryMenu) {
+                        QuickCategoryPickerSheet(
+                            currentCategory = uiState.category,
+                            categories = categories,
+                            onCategorySelected = { categoryName ->
+                                viewModel.updateTransactionCategory(categoryName)
+                                showCategoryMenu = false
+                            },
+                            onDismiss = { showCategoryMenu = false }
+                        )
                     }
                 }
             }

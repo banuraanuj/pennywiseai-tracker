@@ -11,7 +11,8 @@ class RuleTemplateService @Inject constructor() {
     fun getDefaultRuleTemplates(): List<TransactionRule> {
         return listOf(
             // Just one simple example rule to get users started
-            createSmallPaymentsToFoodRule()
+            createSmallPaymentsToFoodRule(),
+            createCreditCardBillPaymentRule()
         )
     }
 
@@ -256,6 +257,42 @@ class RuleTemplateService @Inject constructor() {
                     field = TransactionField.CATEGORY,
                     actionType = ActionType.SET,
                     value = "Transfer"
+                )
+            ),
+            isActive = false
+        )
+    }
+
+    private fun createCreditCardBillPaymentRule(): TransactionRule {
+        return TransactionRule(
+            id = UUID.randomUUID().toString(),
+            name = "Credit Card Bill Payment",
+            description = "Mark credit card bill payments as transfers to avoid double counting expenses",
+            priority = 100,
+            conditions = listOf(
+                RuleCondition(
+                    field = TransactionField.NARRATION,
+                    operator = ConditionOperator.REGEX_MATCHES,
+                    value = "(?i)(credit card|cc bill|cc payment|card payment|cred payment)",
+                    logicalOperator = LogicalOperator.OR
+                ),
+                RuleCondition(
+                    field = TransactionField.SMS_TEXT,
+                    operator = ConditionOperator.REGEX_MATCHES,
+                    value = "(?i)(credit card|cc bill|cc payment|card payment|cred payment)",
+                    logicalOperator = LogicalOperator.OR
+                )
+            ),
+            actions = listOf(
+                RuleAction(
+                    field = TransactionField.TYPE,
+                    actionType = ActionType.SET,
+                    value = "transfer"
+                ),
+                RuleAction(
+                    field = TransactionField.CATEGORY,
+                    actionType = ActionType.SET,
+                    value = "Credit Card Bill"
                 )
             ),
             isActive = false

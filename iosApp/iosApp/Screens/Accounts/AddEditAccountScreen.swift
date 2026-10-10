@@ -16,10 +16,18 @@ struct AddEditAccountScreen: View {
     @State private var balanceText = ""
     @State private var currency = CurrencyManager.shared.displayCurrency
 
-    private let accountTypes = ["SAVINGS", "CURRENT", "CREDIT"]
+    private let accountTypes = ["SAVINGS", "CURRENT", "CASH", "FIXED_DEPOSIT", "RECURRING_DEPOSIT", "CREDIT"]
     private let currencies = CurrencyPickerScreen.currencies.map(\.code)
 
     private var isEditing: Bool { editAccount != nil }
+
+    private func formatAccountType(_ type: String) -> String {
+        switch type {
+        case "FIXED_DEPOSIT": return "Fixed Deposit"
+        case "RECURRING_DEPOSIT": return "Recurring Deposit"
+        default: return type.capitalized
+        }
+    }
 
     var body: some View {
         Form {
@@ -37,7 +45,7 @@ struct AddEditAccountScreen: View {
 
                 Picker("Account Type", selection: $accountType) {
                     ForEach(accountTypes, id: \.self) { type in
-                        Text(type.capitalized).tag(type)
+                        Text(formatAccountType(type)).tag(type)
                     }
                 }
             }

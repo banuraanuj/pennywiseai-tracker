@@ -104,6 +104,7 @@ fun AccountDetailScreen(
                     bankName = uiState.bankName,
                     accountLast4 = uiState.accountLast4,
                     primaryCurrency = uiState.primaryCurrency,
+                    accountType = uiState.currentBalance?.accountType,
                     billedOutstanding = uiState.billedOutstanding,
                     unbilledOutstanding = uiState.unbilledOutstanding
                 )
@@ -268,6 +269,7 @@ private fun CurrentBalanceCard(
     bankName: String,
     accountLast4: String,
     primaryCurrency: String,
+    accountType: String? = null,
     billedOutstanding: BigDecimal? = null,
     unbilledOutstanding: BigDecimal? = null
 ) {
@@ -362,7 +364,12 @@ private fun CurrentBalanceCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Icon(
-                    imageVector = if (isCreditCard) Icons.Default.CreditCard else Icons.Default.AccountBalance,
+                    imageVector = when (accountType?.uppercase()) {
+                        "CREDIT" -> Icons.Default.CreditCard
+                        "CASH" -> Icons.Default.Money
+                        "FIXED_DEPOSIT", "RECURRING_DEPOSIT" -> Icons.Default.Savings
+                        else -> Icons.Default.AccountBalance
+                    },
                     contentDescription = null,
                     modifier = Modifier.size(Dimensions.Icon.small),
                     tint = MaterialTheme.colorScheme.onSurfaceVariant

@@ -20,6 +20,8 @@ fun String?.toAccountType(): AccountType = when (this?.uppercase()) {
     "CURRENT" -> AccountType.CURRENT
     "CREDIT" -> AccountType.CREDIT
     "CASH" -> AccountType.CASH
+    "FIXED_DEPOSIT" -> AccountType.FIXED_DEPOSIT
+    "RECURRING_DEPOSIT" -> AccountType.RECURRING_DEPOSIT
     else -> AccountType.SAVINGS  // Default fallback
 }
 
@@ -46,5 +48,7 @@ fun AccountType.displayName(): String = stringResource(
         AccountType.CURRENT -> R.string.account_type_current
         AccountType.CREDIT -> R.string.account_type_credit_card
         AccountType.CASH -> R.string.account_type_cash
+        AccountType.FIXED_DEPOSIT -> R.string.account_type_fixed_deposit
+        AccountType.RECURRING_DEPOSIT -> R.string.account_type_recurring_deposit
     }
 )

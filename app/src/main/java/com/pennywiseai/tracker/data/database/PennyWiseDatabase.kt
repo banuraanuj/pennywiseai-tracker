@@ -66,7 +66,7 @@ import com.pennywiseai.tracker.data.database.entity.CustomTemplateEntity
  * that needs to record the version it was exported against. Bump this in lock-
  * step with any schema change.
  */
-const val SCHEMA_VERSION = 64
+const val SCHEMA_VERSION = 65
 
 /**
  * The PennyWise Room database.
@@ -134,7 +134,9 @@ const val SCHEMA_VERSION = 64
         AutoMigration(from = 56, to = 57),
         // 62->63 adds the custom_templates table. Pure additive change,
         // so Room generates the CREATE TABLE automatically.
-        AutoMigration(from = 62, to = 63)
+        AutoMigration(from = 62, to = 63),
+        AutoMigration(from = 63, to = 64),
+        AutoMigration(from = 64, to = 65)
     ]
 )
 @TypeConverters(Converters::class)
@@ -704,6 +706,13 @@ abstract class PennyWiseDatabase : RoomDatabase() {
             }
         }
 
+        val MIGRATION_64_65 = object : Migration(64, 65) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE `transactions` ADD COLUMN `latitude` REAL DEFAULT NULL")
+                db.execSQL("ALTER TABLE `transactions` ADD COLUMN `longitude` REAL DEFAULT NULL")
+            }
+        }
+
         /**
          * Single source of truth for the migration list. Both the Hilt-built
          * database (DatabaseModule.providePennyWiseDatabase) and the
@@ -737,7 +746,8 @@ abstract class PennyWiseDatabase : RoomDatabase() {
             MIGRATION_60_61,
             MIGRATION_61_62,
             MIGRATION_62_63,
-    com.pennywiseai.tracker.data.database.migration.MIGRATION_63_64,
+            com.pennywiseai.tracker.data.database.migration.MIGRATION_63_64,
+            MIGRATION_64_65,
         )
     }
     
@@ -780,14 +790,30 @@ class Migration7To8 : AutoMigrationSpec {
     override fun onPostMigrate(db: SupportSQLiteDatabase) {
         super.onPostMigrate(db)
         
-        // Insert default categories
+        // Insert default categories and subcategories
         val categories = DefaultCategoryData.ALL
 
         categories.forEachIndexed { index, seed ->
-            db.execSQL("""
-                INSERT INTO categories (name, color, is_system, is_income, display_order, created_at, updated_at)
-                VALUES (?, ?, 1, ?, ?, datetime('now'), datetime('now'))
-            """.trimIndent(), arrayOf<Any>(seed.name, seed.colorHex, if (seed.isIncome) 1 else 0, index + 1))
+            val statement = db.compileStatement("INSERT INTO categories (name, color, icon, is_system, is_income, display_order, created_at, updated_at) VALUES (?, ?, ?, 1, ?, ?, datetime('now'), datetime('now'))")
+            statement.bindString(1, seed.name)
+            statement.bindString(2, seed.colorHex)
+            val parentIcon = seed.icon
+            if (parentIcon != null) statement.bindString(3, parentIcon) else statement.bindNull(3)
+            statement.bindLong(4, if (seed.isIncome) 1 else 0)
+            statement.bindLong(5, (index + 1).toLong())
+            val parentId = statement.executeInsert()
+
+            seed.subCategories.forEachIndexed { subIndex, subSeed ->
+                val subStatement = db.compileStatement("INSERT INTO categories (name, color, icon, parent_id, is_system, is_income, display_order, created_at, updated_at) VALUES (?, ?, ?, ?, 1, ?, ?, datetime('now'), datetime('now'))")
+                subStatement.bindString(1, subSeed.name)
+                subStatement.bindString(2, seed.colorHex)
+                val subIcon = subSeed.icon
+                if (subIcon != null) subStatement.bindString(3, subIcon) else subStatement.bindNull(3)
+                subStatement.bindLong(4, parentId)
+                subStatement.bindLong(5, if (seed.isIncome) 1 else 0)
+                subStatement.bindLong(6, ((index + 1) * 100 + subIndex + 1).toLong())
+                subStatement.executeInsert()
+            }
         }
     }
 }

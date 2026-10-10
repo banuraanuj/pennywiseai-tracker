@@ -29,15 +29,20 @@ private struct AccountCarouselCard: View {
     private var accountTypeIcon: String {
         if account.isCreditCard { return "creditcard.fill" }
         switch account.accountType?.uppercased() {
-        case "SAVINGS": return "banknote.fill"
-        case "CURRENT": return "building.columns.fill"
-        default: return "banknote.fill"
+        case "SAVINGS", "CURRENT": return "building.columns.fill"
+        case "CASH": return "banknote.fill"
+        case "FIXED_DEPOSIT", "RECURRING_DEPOSIT": return "leaf.fill"
+        default: return "building.columns.fill"
         }
     }
 
     private var accountTypeLabel: String {
         if account.isCreditCard { return "Credit" }
-        return account.accountType?.capitalized ?? "Savings"
+        switch account.accountType?.uppercased() {
+        case "FIXED_DEPOSIT": return "Fixed Deposit"
+        case "RECURRING_DEPOSIT": return "Recurring Deposit"
+        default: return account.accountType?.capitalized ?? "Savings"
+        }
     }
 
     var body: some View {

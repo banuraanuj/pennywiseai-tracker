@@ -101,14 +101,48 @@ struct AccountListScreen: View {
 
     @ViewBuilder
     private var accountsSection: some View {
+        let isInvestment: (SharedAccountItem) -> Bool = { account in
+            let type = account.accountType?.uppercased()
+            return type == "FIXED_DEPOSIT" || type == "RECURRING_DEPOSIT"
+        }
+        let regularAccounts = viewModel.accounts.filter { !isInvestment($0) }
+        let investmentAccounts = viewModel.accounts.filter { isInvestment($0) }
+
         VStack(alignment: .leading, spacing: AppSpacing.md) {
-            Text("Accounts")
+            Text("Bank Accounts")
                 .font(AppTypography.headline)
 
-            if viewModel.accounts.isEmpty {
+            if regularAccounts.isEmpty {
                 emptyAccountsView
             } else {
-                ForEach(viewModel.accounts, id: \.accountKey) { account in
+                ForEach(regularAccounts, id: \.accountKey) { account in
+                    NavigationLink(destination: AccountDetailScreen(
+                        bankName: account.bankName,
+                        accountLast4: account.accountLast4,
+                        viewModel: viewModel
+                    )) {
+                        AccountRow(account: account)
+                    }
+                    .buttonStyle(.plain)
+                    .contextMenu {
+                        Button(role: .destructive) {
+                            viewModel.deleteAccount(
+                                bankName: account.bankName,
+                                accountLast4: account.accountLast4
+                            )
+                        } label: {
+                            Label("Delete", systemImage: "trash")
+                        }
+                    }
+                }
+            }
+
+            if !investmentAccounts.isEmpty {
+                Text("Investments & Deposits")
+                    .font(AppTypography.headline)
+                    .padding(.top, AppSpacing.sm)
+
+                ForEach(investmentAccounts, id: \.accountKey) { account in
                     NavigationLink(destination: AccountDetailScreen(
                         bankName: account.bankName,
                         accountLast4: account.accountLast4,
@@ -287,6 +321,9 @@ struct AccountTypeBadge: View {
         case "SAVINGS": return "Savings"
         case "CURRENT": return "Current"
         case "CREDIT": return "Credit"
+        case "CASH": return "Cash"
+        case "FIXED_DEPOSIT": return "Fixed Deposit"
+        case "RECURRING_DEPOSIT": return "Recurring Deposit"
         default: return type.capitalized
         }
     }
@@ -296,6 +333,8 @@ struct AccountTypeBadge: View {
         case "SAVINGS": return .green
         case "CURRENT": return .blue
         case "CREDIT": return .orange
+        case "CASH": return .mint
+        case "FIXED_DEPOSIT", "RECURRING_DEPOSIT": return .teal
         default: return .secondary
         }
     }

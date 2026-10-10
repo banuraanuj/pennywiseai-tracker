@@ -596,7 +596,9 @@ object SharedCategoryMapping {
 
     private val INVESTMENT = setOf(
         "groww", "zerodha", "upstox", "kuvera", "paytm money", "coin",
-        "smallcase", "mutual fund", "sip", "angel", "5paisa", "etmoney"
+        "smallcase", "mutual fund", "sip", "angel", "5paisa", "etmoney",
+        "epf", "epfo", "ppf", "nps", "fixed deposit", "recurring deposit", "fd", "rd",
+        "sovereign gold", "sgb", "bonds", "indmoney", "kite", "nse", "bse", "cdsl", "nsdl"
     )
 
     private val BANKING = setOf(
@@ -843,6 +845,18 @@ object SharedCategoryMapping {
         "magnoliasservicedrbangkok"
     )
 
+    private val FAMILY_CHILDREN = setOf(
+        "school", "tuition", "fee", "fees", "books", "stationery", "uniform",
+        "daycare", "kindergarten", "nursery", "toy", "toys", "kid", "kids",
+        "child", "children", "baby", "diapers", "activity class", "crèche", "creche"
+    )
+
+    private val HOUSING_MAINTENANCE = setOf(
+        "rent", "maintenance", "society", "apartment", "housing", "repair",
+        "hardware", "carpenter", "plumber", "electrician", "painter", "pest control",
+        "tenant", "landlord"
+    )
+
     // --- single ordered rule list (priority preserved) ---
     private data class Rule(
         val categoryName: String,
@@ -865,6 +879,8 @@ object SharedCategoryMapping {
         Rule("Banking", BANKING),
         Rule("Personal Care", PERSONAL_CARE),
         Rule("Education", EDUCATION),
+        Rule("Family & Children", FAMILY_CHILDREN),
+        Rule("Housing & Maintenance", HOUSING_MAINTENANCE),
         Rule("Mobile", MOBILE),
         Rule("Fitness", FITNESS),
         Rule("Insurance", INSURANCE),

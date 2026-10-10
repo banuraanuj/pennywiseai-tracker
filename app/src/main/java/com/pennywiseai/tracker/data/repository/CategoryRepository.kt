@@ -103,16 +103,31 @@ class CategoryRepository @Inject constructor(
     suspend fun initializeDefaultCategories() {
         // Only initialize if no categories exist
         if (categoryDao.getCategoryCount() == 0) {
-            val defaultCategories = DefaultCategoryData.ALL.map { seed ->
-                CategoryEntity(
-                    name = seed.name,
-                    color = seed.colorHex,
-                    isSystem = true,
-                    isIncome = seed.isIncome,
-                    displayOrder = DefaultCategoryData.ALL.indexOf(seed) + 1
+            DefaultCategoryData.ALL.forEachIndexed { index, seed ->
+                val parentId = categoryDao.insertCategory(
+                    CategoryEntity(
+                        name = seed.name,
+                        color = seed.colorHex,
+                        icon = seed.icon,
+                        isSystem = true,
+                        isIncome = seed.isIncome,
+                        displayOrder = index + 1
+                    )
                 )
+                seed.subCategories.forEachIndexed { subIndex, subSeed ->
+                    categoryDao.insertCategory(
+                        CategoryEntity(
+                            name = subSeed.name,
+                            color = seed.colorHex,
+                            icon = subSeed.icon,
+                            parentId = parentId,
+                            isSystem = true,
+                            isIncome = seed.isIncome,
+                            displayOrder = (index + 1) * 100 + subIndex + 1
+                        )
+                    )
+                }
             }
-            categoryDao.insertCategories(defaultCategories)
         }
     }
 }

@@ -314,10 +314,26 @@ class DatabaseCallback : RoomDatabase.Callback() {
         val categories = DefaultCategoryData.ALL
 
         categories.forEachIndexed { index, seed ->
-            db.execSQL("""
-                INSERT OR IGNORE INTO categories (name, color, is_system, is_income, display_order, created_at, updated_at)
-                VALUES (?, ?, 1, ?, ?, datetime('now'), datetime('now'))
-            """.trimIndent(), arrayOf<Any>(seed.name, seed.colorHex, if (seed.isIncome) 1 else 0, index + 1))
+            val statement = db.compileStatement("INSERT OR IGNORE INTO categories (name, color, icon, is_system, is_income, display_order, created_at, updated_at) VALUES (?, ?, ?, 1, ?, ?, datetime('now'), datetime('now'))")
+            statement.bindString(1, seed.name)
+            statement.bindString(2, seed.colorHex)
+            val parentIcon = seed.icon
+            if (parentIcon != null) statement.bindString(3, parentIcon) else statement.bindNull(3)
+            statement.bindLong(4, if (seed.isIncome) 1 else 0)
+            statement.bindLong(5, (index + 1).toLong())
+            val parentId = statement.executeInsert()
+
+            seed.subCategories.forEachIndexed { subIndex, subSeed ->
+                val subStatement = db.compileStatement("INSERT OR IGNORE INTO categories (name, color, icon, parent_id, is_system, is_income, display_order, created_at, updated_at) VALUES (?, ?, ?, ?, 1, ?, ?, datetime('now'), datetime('now'))")
+                subStatement.bindString(1, subSeed.name)
+                subStatement.bindString(2, seed.colorHex)
+                val subIcon = subSeed.icon
+                if (subIcon != null) subStatement.bindString(3, subIcon) else subStatement.bindNull(3)
+                subStatement.bindLong(4, parentId)
+                subStatement.bindLong(5, if (seed.isIncome) 1 else 0)
+                subStatement.bindLong(6, ((index + 1) * 100 + subIndex + 1).toLong())
+                subStatement.executeInsert()
+            }
         }
     }
 

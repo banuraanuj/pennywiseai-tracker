@@ -215,19 +215,33 @@ fun ManageAccountsScreen(
                 }
                 
                 // Separate visible and hidden accounts
+                val isInvestment: (com.pennywiseai.tracker.data.database.entity.AccountBalanceEntity) -> Boolean = {
+                    val type = it.accountType?.uppercase()
+                    type == "FIXED_DEPOSIT" || type == "RECURRING_DEPOSIT"
+                }
+                val isRegular: (com.pennywiseai.tracker.data.database.entity.AccountBalanceEntity) -> Boolean = {
+                    !it.isCreditCard && !isInvestment(it)
+                }
+
                 val visibleRegularAccounts = uiState.accounts.filter {
-                    !it.isCreditCard && !viewModel.isAccountHidden(it.bankName, it.accountLast4)
+                    isRegular(it) && !viewModel.isAccountHidden(it.bankName, it.accountLast4)
+                }
+                val visibleInvestments = uiState.accounts.filter {
+                    isInvestment(it) && !viewModel.isAccountHidden(it.bankName, it.accountLast4)
                 }
                 val visibleCreditCards = uiState.accounts.filter {
                     it.isCreditCard && !viewModel.isAccountHidden(it.bankName, it.accountLast4)
                 }
                 val hiddenRegularAccounts = uiState.accounts.filter {
-                    !it.isCreditCard && viewModel.isAccountHidden(it.bankName, it.accountLast4)
+                    isRegular(it) && viewModel.isAccountHidden(it.bankName, it.accountLast4)
+                }
+                val hiddenInvestments = uiState.accounts.filter {
+                    isInvestment(it) && viewModel.isAccountHidden(it.bankName, it.accountLast4)
                 }
                 val hiddenCreditCards = uiState.accounts.filter {
                     it.isCreditCard && viewModel.isAccountHidden(it.bankName, it.accountLast4)
                 }
-                val allRegularAccounts = uiState.accounts.filter { !it.isCreditCard }
+                val allRegularAccounts = uiState.accounts.filter { !it.isCreditCard } // Keep this for OrphanedCardItem linkage
                 
                 // Regular Bank Accounts Section (Visible Only)
                 if (visibleRegularAccounts.isNotEmpty()) {
@@ -299,6 +313,53 @@ fun ManageAccountsScreen(
                     }
                 }
 
+                // Investments & Deposits Section (Visible Only)
+                if (visibleInvestments.isNotEmpty()) {
+                    item {
+                        Spacer(modifier = Modifier.height(Spacing.md))
+                        SectionHeaderV2(title = stringResource(R.string.manage_accounts_section_investments))
+                    }
+
+                    items(visibleInvestments, key = { it.id }, contentType = { "account" }) { account ->
+                        AccountItem(
+                            account = account,
+                            linkedCards = uiState.linkedCards[account.accountLast4] ?: emptyList(),
+                            isHidden = false,
+                            onToggleVisibility = {
+                                viewModel.toggleAccountVisibility(account.bankName, account.accountLast4)
+                            },
+                            onUpdateBalance = {
+                                selectedAccount = account.bankName to account.accountLast4
+                                selectedAccountEntity = account
+                                showUpdateDialog = true
+                            },
+                            onViewHistory = {
+                                onNavigateToBalanceHistory(account.bankName, account.accountLast4)
+                            },
+                            onUnlinkCard = { cardId ->
+                                viewModel.unlinkCard(cardId)
+                            },
+                            onDeleteAccount = {
+                                accountToDelete = account.bankName to account.accountLast4
+                                showDeleteConfirmDialog = true
+                            },
+                            onEditAccount = {
+                                accountToEdit = account
+                                showEditDialog = true
+                            },
+                            onSetProfile = { profileId ->
+                                viewModel.setAccountProfile(account.bankName, account.accountLast4, profileId)
+                            },
+                            onSetAlias = { alias ->
+                                viewModel.setAccountAlias(account.bankName, account.accountLast4, alias)
+                            },
+                            onSetLowBalanceThreshold = { threshold ->
+                                viewModel.setLowBalanceThreshold(account.bankName, account.accountLast4, threshold)
+                            }
+                        )
+                    }
+                }
+
                 // Credit Cards Section (Visible Only)
                 if (visibleCreditCards.isNotEmpty()) {
                     item {
@@ -337,7 +398,7 @@ fun ManageAccountsScreen(
                 }
 
                 // Hidden Accounts Section (Collapsible)
-                if (hiddenRegularAccounts.isNotEmpty() || hiddenCreditCards.isNotEmpty()) {
+                if (hiddenRegularAccounts.isNotEmpty() || hiddenInvestments.isNotEmpty() || hiddenCreditCards.isNotEmpty()) {
                     item {
                         Spacer(modifier = Modifier.height(Spacing.md))
                         Card(
@@ -366,7 +427,7 @@ fun ManageAccountsScreen(
                                         tint = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
                                     Text(
-                                        text = stringResource(R.string.manage_accounts_hidden_header, hiddenRegularAccounts.size + hiddenCreditCards.size),
+                                        text = stringResource(R.string.manage_accounts_hidden_header, hiddenRegularAccounts.size + hiddenInvestments.size + hiddenCreditCards.size),
                                         style = MaterialTheme.typography.titleMedium,
                                         fontWeight = FontWeight.SemiBold,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -384,6 +445,46 @@ fun ManageAccountsScreen(
                     if (showHiddenAccounts) {
                         // Hidden Bank Accounts
                         items(hiddenRegularAccounts, key = { it.id }, contentType = { "account" }) { account ->
+                            AccountItem(
+                                account = account,
+                                linkedCards = uiState.linkedCards[account.accountLast4] ?: emptyList(),
+                                isHidden = true,
+                                onToggleVisibility = {
+                                    viewModel.toggleAccountVisibility(account.bankName, account.accountLast4)
+                                },
+                                onUpdateBalance = {
+                                    selectedAccount = account.bankName to account.accountLast4
+                                    selectedAccountEntity = account
+                                    showUpdateDialog = true
+                                },
+                                onViewHistory = {
+                                    onNavigateToBalanceHistory(account.bankName, account.accountLast4)
+                                },
+                                onUnlinkCard = { cardId ->
+                                    viewModel.unlinkCard(cardId)
+                                },
+                                onDeleteAccount = {
+                                    accountToDelete = account.bankName to account.accountLast4
+                                    showDeleteConfirmDialog = true
+                                },
+                                onEditAccount = {
+                                    accountToEdit = account
+                                    showEditDialog = true
+                                },
+                                onSetProfile = { profileId ->
+                                    viewModel.setAccountProfile(account.bankName, account.accountLast4, profileId)
+                                },
+                                onSetAlias = { alias ->
+                                    viewModel.setAccountAlias(account.bankName, account.accountLast4, alias)
+                                },
+                                onSetLowBalanceThreshold = { threshold ->
+                                    viewModel.setLowBalanceThreshold(account.bankName, account.accountLast4, threshold)
+                                }
+                            )
+                        }
+
+                        // Hidden Investments
+                        items(hiddenInvestments, key = { it.id }, contentType = { "account" }) { account ->
                             AccountItem(
                                 account = account,
                                 linkedCards = uiState.linkedCards[account.accountLast4] ?: emptyList(),

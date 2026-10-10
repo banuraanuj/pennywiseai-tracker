@@ -32,6 +32,16 @@ import com.pennywiseai.tracker.data.database.entity.TransactionEntity
 import com.pennywiseai.tracker.ui.theme.Dimensions
 import com.pennywiseai.tracker.ui.theme.Spacing
 
+import androidx.compose.foundation.layout.Column
+import androidx.compose.material3.Tab
+import androidx.compose.material3.PrimaryTabRow
+import androidx.compose.material3.TabRowDefaults
+import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
+import kotlinx.coroutines.launch
+
 /**
  * Modal bottom-sheet picker for changing a transaction's category. Used both
  * from the transactions list (long-press / overflow) and from the txn-alert
@@ -61,6 +71,35 @@ fun QuickCategoryPickerSheet(
     onTagsChanged: ((List<String>) -> Unit)? = null
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    
+    // Group categories into Expense, Income, and Investment
+    val investmentsParentId = remember(categories) { categories.find { it.name == "Investments" }?.id }
+    
+    val expenseCategories = remember(categories) { 
+        categories.filter { !it.isIncome && it.id != investmentsParentId && it.parentId != investmentsParentId } 
+    }
+    val incomeCategories = remember(categories) { 
+        categories.filter { it.isIncome } 
+    }
+    val investmentCategories = remember(categories) { 
+        categories.filter { it.id == investmentsParentId || it.parentId == investmentsParentId } 
+    }
+
+    val tabs = listOf("Expenses", "Income", "Investments")
+    
+    // Find initial tab based on current category
+    val initialTabIndex = remember(currentCategory, categories) {
+        val currentCat = categories.find { it.name == currentCategory }
+        when {
+            currentCat?.isIncome == true -> 1
+            currentCat?.id == investmentsParentId || currentCat?.parentId == investmentsParentId -> 2
+            else -> 0
+        }
+    }
+    
+    val pagerState = rememberPagerState(initialPage = initialTabIndex, pageCount = { tabs.size })
+    val coroutineScope = rememberCoroutineScope()
+
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState
@@ -102,43 +141,73 @@ fun QuickCategoryPickerSheet(
                 bottom = Spacing.sm
             )
         )
-        // LazyColumn so long category lists stay reachable when the sheet is
-        // fully expanded — a plain Column would render items past the screen
-        // bottom unscrollable.
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = Spacing.md)
+        
+        PrimaryTabRow(
+            selectedTabIndex = pagerState.currentPage,
+            indicator = {
+                TabRowDefaults.SecondaryIndicator(
+                    Modifier.tabIndicatorOffset(pagerState.currentPage),
+                    color = MaterialTheme.colorScheme.primary
+                )
+            }
         ) {
-            items(categories, key = { it.id }) { category ->
-                val selected = currentCategory == category.name
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable { onCategorySelected(category.name) }
-                        .padding(
-                            // Sub-categories indent under their parent (#374)
-                            start = Dimensions.Padding.content + (if (category.parentId != null) Spacing.lg else Spacing.none),
-                            end = Dimensions.Padding.content,
-                            top = Spacing.sm,
-                            bottom = Spacing.sm
-                        ),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(Spacing.md)
-                ) {
-                    CategoryChip(category = category, showText = false)
-                    Text(
-                        text = category.name,
-                        modifier = Modifier.weight(1f),
-                        style = MaterialTheme.typography.bodyLarge,
-                        fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal
-                    )
-                    if (selected) {
-                        Icon(
-                            imageVector = Icons.Default.Check,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary
+            tabs.forEachIndexed { index, title ->
+                Tab(
+                    selected = pagerState.currentPage == index,
+                    onClick = { coroutineScope.launch { pagerState.animateScrollToPage(index) } },
+                    text = { Text(text = title) }
+                )
+            }
+        }
+        
+        HorizontalPager(
+            state = pagerState,
+            modifier = Modifier.fillMaxWidth()
+        ) { page ->
+            val pageCategories = when (page) {
+                0 -> expenseCategories
+                1 -> incomeCategories
+                else -> investmentCategories
+            }
+            
+            // LazyColumn so long category lists stay reachable when the sheet is
+            // fully expanded — a plain Column would render items past the screen
+            // bottom unscrollable.
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = Spacing.md)
+            ) {
+                items(pageCategories, key = { it.id }) { category ->
+                    val selected = currentCategory == category.name
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { onCategorySelected(category.name) }
+                            .padding(
+                                // Sub-categories indent under their parent (#374)
+                                start = Dimensions.Padding.content + (if (category.parentId != null) Spacing.lg else Spacing.none),
+                                end = Dimensions.Padding.content,
+                                top = Spacing.sm,
+                                bottom = Spacing.sm
+                            ),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(Spacing.md)
+                    ) {
+                        CategoryChip(category = category, showText = false)
+                        Text(
+                            text = category.name,
+                            modifier = Modifier.weight(1f),
+                            style = MaterialTheme.typography.bodyLarge,
+                            fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal
                         )
+                        if (selected) {
+                            Icon(
+                                imageVector = Icons.Default.Check,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                        }
                     }
                 }
             }

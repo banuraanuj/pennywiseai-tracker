@@ -52,7 +52,9 @@ enum class AccountType {
     SAVINGS,
     CURRENT,
     CREDIT,
-    CASH
+    CASH,
+    FIXED_DEPOSIT,
+    RECURRING_DEPOSIT
 }
 
 data class PendingProfileReassign(

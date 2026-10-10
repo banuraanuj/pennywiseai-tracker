@@ -28,6 +28,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.pennywiseai.tracker.ui.components.CustomTitleTopAppBar
 import com.pennywiseai.tracker.ui.components.cards.PennyWiseCardV2
 import com.pennywiseai.tracker.utils.CurrencyFormatter
+import com.pennywiseai.tracker.domain.model.displayName
 import com.pennywiseai.tracker.ui.theme.Dimensions
 import com.pennywiseai.tracker.ui.theme.Spacing
 import dev.chrisbanes.haze.HazeState
@@ -155,9 +156,7 @@ fun AddAccountScreen(
                 onExpandedChange = { showTypeDropdown = it }
             ) {
                 TextField(
-                    value = formState.accountType.name.lowercase().let { s ->
-                        if (s.isEmpty()) s else s.substring(0, 1).uppercase() + s.substring(1)
-                    },
+                    value = formState.accountType.displayName(),
                     onValueChange = {},
                     readOnly = true,
                     label = { Text(stringResource(R.string.add_account_type_label), fontWeight = FontWeight.SemiBold) },
@@ -171,6 +170,7 @@ fun AddAccountScreen(
                                 AccountType.SAVINGS, AccountType.CURRENT -> Icons.Default.AccountBalance
                                 AccountType.CREDIT -> Icons.Default.CreditCard
                                 AccountType.CASH -> Icons.Default.Money
+                                AccountType.FIXED_DEPOSIT, AccountType.RECURRING_DEPOSIT -> Icons.Default.Savings
                             },
                             contentDescription = null
                         )
@@ -183,12 +183,10 @@ fun AddAccountScreen(
                     expanded = showTypeDropdown,
                     onDismissRequest = { showTypeDropdown = false }
                 ) {
-                    AccountType.values().forEach { type ->
+                    AccountType.entries.forEach { type ->
                         DropdownMenuItem(
                             text = {
-                                Text(type.name.lowercase().let { s ->
-                                    if (s.isEmpty()) s else s.substring(0, 1).uppercase() + s.substring(1)
-                                })
+                                Text(type.displayName())
                             },
                             onClick = {
                                 viewModel.updateAccountType(type)
@@ -200,6 +198,7 @@ fun AddAccountScreen(
                                         AccountType.SAVINGS, AccountType.CURRENT -> Icons.Default.AccountBalance
                                         AccountType.CREDIT -> Icons.Default.CreditCard
                                         AccountType.CASH -> Icons.Default.Money
+                                        AccountType.FIXED_DEPOSIT, AccountType.RECURRING_DEPOSIT -> Icons.Default.Savings
                                     },
                                     contentDescription = null
                                 )

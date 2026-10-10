@@ -21,6 +21,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.flatMapLatest
 import java.math.BigDecimal
 import java.math.RoundingMode
@@ -540,7 +541,7 @@ class BudgetGroupRepository @Inject constructor(
                     currency = currency,
                     pageWindow = pageWindow
                 )
-            }
+            }.flowOn(kotlinx.coroutines.Dispatchers.Default)
         }
     }
 

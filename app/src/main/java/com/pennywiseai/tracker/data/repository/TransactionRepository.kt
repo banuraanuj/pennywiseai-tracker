@@ -14,6 +14,7 @@ import com.pennywiseai.tracker.utils.countsInTotals
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.flowOn
 import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -302,7 +303,7 @@ open class TransactionRepository @Inject constructor(
             val endDate = cycleEnd.atTime(LocalTime.MAX)
             transactionDao.getTransactionsBetweenDates(startDate, endDate)
                 // Monthly spending summary ignores analytics-excluded and loan-linked transactions (#451, #800).
-                .map { txns -> txns.filter { it.countsInTotals() } }
+                .map { txns -> txns.filter { it.countsInTotals() } }.flowOn(kotlinx.coroutines.Dispatchers.Default)
         }
     }
 
@@ -315,7 +316,7 @@ open class TransactionRepository @Inject constructor(
             val endDate = prevEnd.atTime(LocalTime.MAX)
             transactionDao.getTransactionsBetweenDates(startDate, endDate)
                 // Monthly spending summary ignores analytics-excluded and loan-linked transactions (#451, #800).
-                .map { txns -> txns.filter { it.countsInTotals() } }
+                .map { txns -> txns.filter { it.countsInTotals() } }.flowOn(kotlinx.coroutines.Dispatchers.Default)
         }
     }
 
@@ -498,4 +499,15 @@ open class TransactionRepository @Inject constructor(
      */
     suspend fun deleteSplit(split: TransactionSplitEntity) =
         transactionSplitDao.deleteSplit(split)
+
+    /**
+     * Gets transactions near the specified geographic coordinates for location-based suggestions.
+     */
+    suspend fun getTransactionsNearLocation(
+        lat: Double,
+        lng: Double,
+        radiusDegrees: Double = 0.005,
+        limit: Int = 10
+    ): List<TransactionEntity> =
+        transactionDao.getTransactionsNearLocation(lat, lng, radiusDegrees, limit)
 }

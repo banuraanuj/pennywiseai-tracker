@@ -120,7 +120,13 @@ data class TransactionEntity(
     val groupId: Long? = null,
 
     @ColumnInfo(name = "profile_id", defaultValue = "NULL")
-    val profileId: Long? = null
+    val profileId: Long? = null,
+
+    @ColumnInfo(name = "latitude", defaultValue = "NULL")
+    val latitude: Double? = null,
+
+    @ColumnInfo(name = "longitude", defaultValue = "NULL")
+    val longitude: Double? = null
 )
 
 @Serializable

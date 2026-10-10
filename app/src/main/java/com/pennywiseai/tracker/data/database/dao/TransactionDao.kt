@@ -424,4 +424,21 @@ interface TransactionDao {
         dateStart: LocalDateTime,
         dateEnd: LocalDateTime
     ): List<TransactionEntity>
+
+    @Query("""
+        SELECT * FROM transactions
+        WHERE is_deleted = 0
+        AND latitude IS NOT NULL
+        AND longitude IS NOT NULL
+        AND latitude BETWEEN (:lat - :radiusDegrees) AND (:lat + :radiusDegrees)
+        AND longitude BETWEEN (:lng - :radiusDegrees) AND (:lng + :radiusDegrees)
+        ORDER BY date_time DESC
+        LIMIT :limit
+    """)
+    suspend fun getTransactionsNearLocation(
+        lat: Double,
+        lng: Double,
+        radiusDegrees: Double = 0.005,
+        limit: Int = 10
+    ): List<TransactionEntity>
 }

@@ -51,6 +51,10 @@ PennyWise AI is built with privacy as the core principle. We believe your financ
 - PennyWise ships this permission for one opt-in feature: contact lookup, which can resolve a UPI VPA like `merchant@ybl` into a name from your address book so merchant lists read naturally
 - The lookup runs on-device and the feature stays dormant until you enable it in Settings
 
+### Location (`ACCESS_FINE_LOCATION`, `ACCESS_COARSE_LOCATION`, opt-in)
+- Used to capture device geolocation when transaction SMS are received to tag expenses and provide location-based spending suggestions.
+- Location data stays entirely on-device in your local SQLite database and is never transmitted.
+
 ### Internet Permission
 - **Model Download**: One-time download of the ~1.5GB Qwen 2.5 model from a public Cloudflare R2 bucket, verified against a SHA-256 checksum before use
 - **Exchange Rates**: Multi-currency features fetch current rates from open.er-api.com; only the currency code is sent
@@ -58,7 +62,7 @@ PennyWise AI is built with privacy as the core principle. We believe your financ
 - **App Updates**: Google Play Store variant uses Play Services for app updates (F-Droid variant does not)
 - **After Model Download**: AI works completely offline, no internet required for core features
 
-No location, camera, or microphone permission is requested.
+No camera or microphone permission is requested.
 
 ## Third-Party Services
 

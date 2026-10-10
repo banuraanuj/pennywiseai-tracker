@@ -51,7 +51,8 @@ class SmsTransactionProcessor @Inject constructor(
     private val tagRepository: TagRepository,
     private val ignoredAccountsStore: IgnoredAccountsStore,
     private val database: PennyWiseDatabase,
-    private val customTemplateDao: CustomTemplateDao
+    private val customTemplateDao: CustomTemplateDao,
+    private val locationManagerHelper: LocationManagerHelper
 ) {
     companion object {
         private const val TAG = "SmsTransactionProcessor"
@@ -151,8 +152,12 @@ class SmsTransactionProcessor @Inject constructor(
         smsBody: String
     ): ProcessingResult {
         return try {
-            // Convert to entity
-            val entity = parsedTransaction.toEntity()
+            // Convert to entity with device geolocation if available
+            val location = locationManagerHelper.getCurrentLocation()
+            val entity = parsedTransaction.toEntity().copy(
+                latitude = location?.first,
+                longitude = location?.second
+            )
 
             // An ignored account's messages are dropped before anything is
             // stored, so no row and no notification (#826). A debit-card

@@ -25,9 +25,7 @@ class LoanRepository @Inject constructor(
 
     fun getActiveLoanCount(): Flow<Int> = loanDao.getActiveLoanCount()
 
-    fun getTotalLentRemaining(): Flow<BigDecimal> = loanDao.getTotalLentRemaining()
 
-    fun getTotalBorrowedRemaining(): Flow<BigDecimal> = loanDao.getTotalBorrowedRemaining()
 
     fun getActiveLentTransactionsInPeriod(
         startDate: LocalDateTime,
